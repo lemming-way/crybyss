@@ -278,8 +278,14 @@ class CruiseData implements Cruise {
 				angle: item.angle,
 				isStop: !!item.isStop
 			};
-			if (item.sunrise) this._sunrises.push( ret );
-			if (item.sunset) this._sunsets.push( ret );
+			if (item.sunrise) {
+				ret.side = item.side ?? '';
+				this._sunrises.push( ret );
+			}
+			if (item.sunset) {
+				ret.side = item.side ?? '';
+				this._sunsets.push( ret );
+			}
 			if (!!item.gateway) {
 				gateways.push({
 					arrival: ret.arrival,

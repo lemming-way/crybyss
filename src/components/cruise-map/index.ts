@@ -823,8 +823,7 @@ class CruiseAssets {
 	}
 
 	private static async sunriseSunsetPopup( type: 'sunrise' | 'sunset', point: TrackPoint, map: CruiseMap ): Promise<Element> {
-		const {lat, lng, arrival} = point;
-		const side = '';
+		const {lat, lng, arrival, side} = point;
 		const title = type === 'sunset' ? 'Закат' : 'Восход';
 		const icon = type === 'sunset' ? sunsetIcon : sunriseIcon;
 		const itemDescription = LocatedItemDescription.create(

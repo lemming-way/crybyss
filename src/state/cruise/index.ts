@@ -81,6 +81,7 @@ export interface TrackPoint {
 	isStop: boolean;
 	sunrise?: boolean;
 	sunset?: boolean;
+	side?: 'left' | 'right';
 	angle?: number;
 }
 
