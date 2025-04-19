@@ -47,12 +47,9 @@ div.cruise-map__marker .placeholder-icon circle {
 	min-height: 24px;
 }
 
+.cruise-map__icon_type_showplace,
 .cruise-map__icon_type_stop {
 	fill: var(--cruise-map__popup_company-color);
-}
-
-.cruise-map__icon_type_showplace {
-	stroke: var(--cruise-map__popup_company-color);
 }
 
 .cruise-map__icon_type_ship {

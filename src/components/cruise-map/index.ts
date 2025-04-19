@@ -4,20 +4,28 @@ import stopMarkerIcon from '../../icons/stop-marker.png';
 import gatewayMarkerIcon from '../../icons/gateway.svg';
 import linerIcon from '../../icons/liner.svg';
 import linersIcon from '../../icons/liners.svg';
-import showplaceIcon from '../../icons/showplace.svg';
 import stopIcon from '../../icons/stop.svg';
 import sunriseIcon from '../../icons/sunrise.svg';
 import sunsetIcon from '../../icons/sunset.svg';
 import linerMarkerIcon from '../../icons/liner-marker.svg';
+import derevoIcon from '../../icons/derevo.svg'
+import fotoIcon from '../../icons/foto_new.svg'
 import museyIcon from '../../icons/musey.svg'
 import mostIcon from '../../icons/most.svg'
 import pillarIcon from '../../icons/pillar.svg'
-import derevoIcon from '../../icons/derevo.svg'
 import mayakIcon from '../../icons/mayak.svg'
-import foto_newIcon from '../../icons/foto_new.svg'
 import voenIcon from '../../icons/voen.svg'
 import yahtaIcon from '../../icons/yahta.svg'
 import yakorIcon from '../../icons/yakor.svg'
+import museyMarkerIcon from '../../icons/musey-marker.svg'
+import mostMarkerIcon from '../../icons/most-marker.svg'
+import pillarMarkerIcon from '../../icons/pillar-marker.svg'
+import derevoMarkerIcon from '../../icons/derevo-marker.svg'
+import mayakMarkerIcon from '../../icons/mayak-marker.svg'
+import fotoMarkerIcon from '../../icons/foto_new-marker.svg'
+import voenMarkerIcon from '../../icons/voen-marker.svg'
+import yahtaMarkerIcon from '../../icons/yahta-marker.svg'
+import yakorMarkerIcon from '../../icons/yakor-marker.svg'
 import circleIcon from '../../icons/circle.svg'
 import {svgAsset} from '../../util';
 import Text from '../../state/text';
@@ -39,6 +47,21 @@ import LocatedItemDescription, {
 } from '../located-item-description';
 import './index.css';
 
+const categorizedMarkers: Record<string, string> = {
+	'Путешествия' : pillarMarkerIcon, // default
+	'Музеи' : museyMarkerIcon,
+	'ГТС, мосты' : mostMarkerIcon,
+	'Исторические достопримечательности' : pillarMarkerIcon,
+	'Событийный туризм' : pillarMarkerIcon, // default
+	'Спорт' : pillarMarkerIcon, // default
+	'Памятники природы' : derevoMarkerIcon,
+	'Маяки' : mayakMarkerIcon,
+	'Фотографические места' : fotoMarkerIcon,
+	'Памятники воинской славы' : voenMarkerIcon,
+	'Стоянки, укрытия, причалы' : yahtaMarkerIcon,
+	'Стоянки' : yakorMarkerIcon
+};
+
 const categorizedIcons: Record<string, string> = {
 	'Путешествия' : pillarIcon, // default
 	'Музеи' : museyIcon,
@@ -48,7 +71,7 @@ const categorizedIcons: Record<string, string> = {
 	'Спорт' : pillarIcon, // default
 	'Памятники природы' : derevoIcon,
 	'Маяки' : mayakIcon,
-	'Фотографические места' : foto_newIcon,
+	'Фотографические места' : fotoIcon,
 	'Памятники воинской славы' : voenIcon,
 	'Стоянки, укрытия, причалы' : yahtaIcon,
 	'Стоянки' : yakorIcon
@@ -347,7 +370,7 @@ class LocationMarker implements InteractiveMapMarker {
 		popupContent: InteractiveMapMarker['popupContent'],
 	) {
 		if (locationType === LocationType.SHOWPLACE && ++markersCounter % 20 !== 0) {
-			const mainIcon = svgAsset( categorizedIcons[ locationCategory ] ?? pillarIcon, 'collapsible' );
+			const mainIcon = svgAsset( categorizedMarkers[ locationCategory ] ?? pillarMarkerIcon, 'collapsible' );
 			const iconColor = iconColors[ locationCategory ] ?? 'var(--main)';
 			const collapsedIcon = svgAsset( circleIcon, 'placeholder-icon' );
 			collapsedIcon.style.setProperty( '--cruise-map__marker_color', iconColor );
@@ -361,7 +384,7 @@ class LocationMarker implements InteractiveMapMarker {
 			const iconString =
 				locationType === LocationType.REGULAR ? stopMarkerIcon :
 				locationType === LocationType.GATEWAY ? gatewayMarkerIcon :
-				categorizedIcons[ locationCategory ] ?? pillarIcon;
+				categorizedMarkers[ locationCategory ] ?? pillarMarkerIcon;
 
 			if (iconString.startsWith( '<svg' )) {
 				this.icon = svgAsset( iconString, 'cruise-map__marker' );
@@ -773,7 +796,7 @@ class CruiseAssets {
 				LocatedItemDescriptionGroup.create([
 					LocatedItemDescriptionRow.create([
 						LocatedItemDescriptionIcon.create(svgAsset(
-							showplaceIcon,
+							categorizedIcons[ category ] ?? pillarIcon,
 							'cruise-map__icon', 'cruise-map__icon_type_showplace',
 						)),
 						LocatedItemDescriptionText.create(name, undefined, { title: true }),
