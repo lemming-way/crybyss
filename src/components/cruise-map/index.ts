@@ -234,7 +234,7 @@ export default class CruiseMap {
 			return;
 		const cruise = this._cruises.get(id);
 		this._cruises.delete(id);
-		cruise.hideAll();
+		cruise.remove();
 	}
 
 	addShip(ship: Ship) {
@@ -484,7 +484,7 @@ class ShipMarker implements InteractiveMapMarker {
 		this.datetime = datetime;
 		const cruises = this.ship.cruisesOn( datetime );
 		const cruise = this.ship.cruiseOn( datetime );
-		if (!cruise?.routeReady) this._removeMarker();
+		if (!cruise?.routeReadyStage) this._removeMarker();
 
 		for (const cruise of this.cruises) {
 			if (!cruises.includes( cruise )) {
@@ -499,7 +499,11 @@ class ShipMarker implements InteractiveMapMarker {
 		this.cruises = cruises;
 
 		if (cruise !== this.activeCruise) {
-			this.map.cruiseAsset( this.activeCruise?.id )?.hideTrack();
+			const activeCruise = this.map.cruiseAsset( this.activeCruise?.id );
+			if (activeCruise) {
+				activeCruise.setHighPriorityLoading( false );
+				activeCruise.hideTrack();
+			}
 			this.activeCruise = cruise;
 			this.map.updateShipsCounter();
 		}
@@ -507,6 +511,10 @@ class ShipMarker implements InteractiveMapMarker {
 		if (this === this.map.selectedShip) {
 			for (const cruise of cruises) {
 				this.map.cruiseAsset( cruise.id )?.showAll();
+			}
+			const activeCruise = this.map.cruiseAsset( this.activeCruise?.id );
+			if (activeCruise) {
+				activeCruise.setHighPriorityLoading( true );
 			}
 		}
 
@@ -573,7 +581,13 @@ class ShipMarker implements InteractiveMapMarker {
 			for (const cruise of this.cruises) {
 				this.map.cruiseAsset( cruise.id ).showAll();
 			}
-			if (this.marker) this.map.cruiseAsset( this.activeCruise?.id )?.showTrack( this.marker );
+			if (this.marker) {
+				const activeCruise = this.map.cruiseAsset( this.activeCruise?.id );
+				if (activeCruise) {
+					activeCruise.setHighPriorityLoading( true );
+					activeCruise.showTrack( this.marker );
+				}
+			}
 		}
 	}
 
@@ -584,6 +598,10 @@ class ShipMarker implements InteractiveMapMarker {
 			this.map.selectedShip = undefined;
 			for (const cruise of this.cruises) {
 				this.map.cruiseAsset( cruise.id ).hideAll();
+			}
+			const activeCruise = this.map.cruiseAsset( this.activeCruise?.id );
+			if (activeCruise) {
+				activeCruise.setHighPriorityLoading( false );
 			}
 		}
 	}
@@ -684,6 +702,7 @@ class CruiseAssets {
 	declare map: CruiseMap;
 	declare cruise: Cruise;
 	declare polyline?: InteractiveMapPolyline | undefined;
+	_trackVisible: boolean = false;
 	stops: Record<string, InteractiveMapMarker> = {};
 	_stopsVisible: boolean = false;
 	sights: Record<string, InteractiveMapMarker> = {};
@@ -698,6 +717,36 @@ class CruiseAssets {
 	constructor( map: CruiseMap, cruise: Cruise ) {
 		this.map = map;
 		this.cruise = cruise;
+		this.loadTrackProgressive();
+	}
+
+	setHighPriorityLoading( highPriority: boolean ) {
+		this.cruise.setHighPriorityLoading( highPriority );
+	}
+
+	loadTrackProgressive() {
+		this.cruise.route.then( route => {
+			if (this.cruise.routeReadyStage > 0 && this.cruise.routeReadyStage < 4) {
+				const highPriority = this.cruise === this.map.selectedShip?.activeCruise;
+				this.cruise.loadTrackProgressive( highPriority )
+					.then( () => {
+						if (this.polyline) {
+							const points = route.points.map(({lat, lng}) => ({lat, lng}));
+							if (this._trackVisible) this.map.clearPolyline( 'track', this.polyline );
+							this.polyline.points = points;
+							if (this._trackVisible) this.map.drawPolyline( 'track', this.polyline );
+						}
+						const ship = this.map.shipMarker( this.cruise.ship.id );
+						if (ship) ship.move( this.map.timelinePoint );
+						if (this.cruise.routeReadyStage < 4) this.loadTrackProgressive();
+					} );
+			}
+		} );
+	}
+
+	remove() {
+		this.hideAll();
+		this.cruise.cancelLoadTrack();
 	}
 
 	showAll() {
@@ -717,6 +766,9 @@ class CruiseAssets {
 	}
 
 	async showTrack( marker: Marker ) {
+		if (this._trackVisible) return;
+		this._trackVisible = true;
+
 		if (!this.polyline) {
 			const company = this.cruise.company;
 
@@ -745,11 +797,14 @@ class CruiseAssets {
 	}
 
 	hideTrack() {
-		if (this.polyline) {
-			this.map.clearPolyline( 'track', this.polyline );
+		if (this._trackVisible) {
+			this._trackVisible = false;
+			if (this.polyline) {
+				this.map.clearPolyline( 'track', this.polyline );
+			}
+			this.hideSunrises();
+			this.hideSunsets();
 		}
-		this.hideSunrises();
-		this.hideSunsets();
 	}
 
 	static async locationPopup( stop: Location, map: CruiseMap ): Promise<Element> {

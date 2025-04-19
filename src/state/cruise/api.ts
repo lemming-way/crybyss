@@ -169,13 +169,17 @@ class CruiseData implements Cruise {
 	declare url: string;
 	declare ship: Ship;
 	declare company: Company;
-	declare routeReady: boolean;
+	declare routeReadyStage: number;
 	declare stops: Promise<TrackLocation[]>;
 	declare _sights: Promise<TrackLocation[]>;
 	declare _gateways: Promise<TrackLocation[]>;
 	declare _sunrises: TrackPoint[];
 	declare _sunsets: TrackPoint[];
 	declare _route: Promise<CruiseRoute>;
+
+	declare _trackLoader?: Promise<void>;
+	declare _isFetching?: boolean;
+	declare _loadHighPriority?: boolean;
 
 	constructor( data: any ) {
 		Object.assign( this, {
@@ -190,7 +194,7 @@ class CruiseData implements Cruise {
 			url: data.url ? ( /^https?:\/\//.test( data.url ) ? '' : siteURL ) + data.url : '',
 			ship: cache.ship( data.shipId ),
 			company: cache.ship( data.shipId )?.company,
-			routeReady: false
+			routeReadyStage: 0
 		} );
 
 		if (!!cache.stops) {
@@ -227,7 +231,7 @@ class CruiseData implements Cruise {
 		if (!!data.points) {
 			const points = this._parseRoute( data.points );
 			this._route = Promise.resolve( new CruiseRoute( points ) );
-			this.routeReady = true;
+			this.routeReadyStage = 4;
 		}
 	}
 
@@ -323,9 +327,70 @@ class CruiseData implements Cruise {
 			const data = await fetchCruiseTracks( this.id );
 			const points = this._parseRoute( data );
 			resolve( new CruiseRoute( points ) );
-			this.routeReady = true;
+			this.routeReadyStage = 1;
 		} );
 		return this._route;
+	}
+
+	loadTrackProgressive( highPriority: boolean = false ) {
+		if (this.routeReadyStage > 0 && this.routeReadyStage < 4) {
+			let promise = this._trackLoader;
+			if (promise) {
+				if (!this._isFetching && this._loadHighPriority !== highPriority) {
+					this._loadHighPriority = highPriority;
+					queueFetchTrackProgressive( this.id, this.routeReadyStage + 1, highPriority );
+				}
+			}
+			else {
+				let route: CruiseRoute;
+				promise = this._route
+					.then( result => {
+						route = result;
+						this._loadHighPriority = highPriority;
+						return queueFetchTrackProgressive( this.id, this.routeReadyStage + 1, highPriority );
+					} )
+					.then( fetching => {
+						this._isFetching = true;
+						return fetching;
+					} )
+					.then( data => {
+						let index = 0;
+						for (const item of data) {
+							const point: TrackPoint = {
+								lat: item.lat,
+								lng: item.lng,
+								arrival: parseDate( item.arrival ),
+								isStop: false,
+								angle: item.angle
+							};
+							while (index < route.points.length && +route.points[ index ].arrival <= +point.arrival) index++;
+							route.points.splice( index, 0, point );
+						}
+						this.routeReadyStage++;
+						this._trackLoader = undefined;
+						this._isFetching = false;
+					} );
+				this._trackLoader = promise;
+			}
+
+			return promise;
+		}
+
+		return Promise.resolve();
+	}
+
+	setHighPriorityLoading( highPriority: boolean ) {
+		if (this._trackLoader && !this._isFetching && this._loadHighPriority !== highPriority) {
+			this._loadHighPriority = highPriority;
+			queueFetchTrackProgressive( this.id, this.routeReadyStage + 1, highPriority );
+		}
+	}
+
+	cancelLoadTrack() {
+		if (this._trackLoader && !this._isFetching) {
+			cancelFetchTrack( this.id );
+			this._trackLoader = undefined;
+		}
 	}
 }
 
@@ -439,7 +504,7 @@ function fetchCruiseTracks( id: string ) {
 		if (ids.length) {
 			const resolvers = cruiseTracksToFetch;
 			cruiseTracksToFetch = {};
-			const data = await connector.send( apiEntries.points, { id: ids } );
+			const data = await connector.send( apiEntries.points, { id: ids, progress: 1 } );
 			for (const id of Object.keys( data )) {
 				resolvers[ id ]( data[ id ] );
 			}
@@ -447,6 +512,66 @@ function fetchCruiseTracks( id: string ) {
 	}, 10 );
 
 	return ret;
+}
+
+interface CruiseTracksToFetchItem {
+	id: string;
+	stage: number;
+	highPriority: boolean;
+	promise: Promise<any>;
+	resolver?: ( data: any ) => void;
+}
+
+let tracksFetching = false;
+const cruiseTracksToFetchQueue: CruiseTracksToFetchItem[] = [];
+function queueFetchTrackProgressive( id: string, stage: number, highPriority: boolean = false ) {
+	const index = cruiseTracksToFetchQueue.findIndex( item => item.id === id );
+	if (index >= 0) {
+		const item = cruiseTracksToFetchQueue[ index ];
+		if (item.highPriority !== highPriority) {
+			cruiseTracksToFetchQueue.splice( index, 1 );
+			item.highPriority = highPriority;
+			if (highPriority) cruiseTracksToFetchQueue.unshift( item );
+			else cruiseTracksToFetchQueue.push( item );
+		}
+		return item.promise;
+	}
+	else {
+		let resolver;
+		const item: CruiseTracksToFetchItem = {
+			id,
+			stage,
+			highPriority,
+			promise: new Promise( resolve => { resolver = resolve; } )
+		};
+		item.resolver = resolver;
+		if (highPriority) cruiseTracksToFetchQueue.unshift( item );
+		else cruiseTracksToFetchQueue.push( item );
+
+		if (!tracksFetching) doFetchTracks();
+
+		return item.promise;
+	}
+}
+
+function doFetchTracks() {
+	if (!tracksFetching && !!cruiseTracksToFetchQueue.length) {
+		tracksFetching = true;
+		const item = cruiseTracksToFetchQueue.shift();
+		const fetching =
+			connector.send( apiEntries.points, { id: item.id, progress: item.stage } )
+			.then( data => data[ item.id ] );
+		fetching.then( () => {
+			tracksFetching = false;
+			if (!!cruiseTracksToFetchQueue.length) doFetchTracks();
+		} );
+		item.resolver( fetching );
+	}
+}
+
+function cancelFetchTrack( id: string ) {
+	const index = cruiseTracksToFetchQueue.findIndex( item => item.id === id );
+	if (index >= 0) cruiseTracksToFetchQueue.splice( index, 1 );
 }
 
 let cruiseSightsToFetch: Record<string, ( data: any ) => void> = {};

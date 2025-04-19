@@ -636,6 +636,7 @@ class LeafletPane<
         polyline(points, {
           color,
           weight: 3,
+          smoothFactor: 2,
           renderer: this.renderer,
         })
       ];
