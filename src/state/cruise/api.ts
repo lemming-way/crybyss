@@ -6,7 +6,7 @@ import {
 
 /// @todo: Конфиг вынести в отдельный файл
 const siteURL = 'https://krubiss.ru';
-const apiURL = 'https://krubiss.ru/api2';
+const apiURL = 'https://krubiss.ru/api2/test.php';
 const apiEntries = {
 	start : '?service=map&method=start',
 	startCruise : '?service=map&method=start&option=cruise',
