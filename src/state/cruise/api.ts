@@ -387,7 +387,7 @@ class CruiseData implements Cruise {
 	}
 
 	cancelLoadTrack() {
-		if (this._trackLoader && !this._isFetching) {
+		if (!!this._trackLoader && !this._isFetching) {
 			cancelFetchTrack( this.id );
 			this._trackLoader = undefined;
 		}
@@ -494,20 +494,32 @@ function dataIsSane( type: 'cruise' | 'company' | 'ship', data: any ): boolean {
 	return true;
 }
 
+let trackFetchingTasks = 0;
 let cruiseTracksToFetch: Record<string, ( data: any ) => void> = {};
 function fetchCruiseTracks( id: string ) {
 	const ret: Promise<any[]> = new Promise( resolve => {
 		cruiseTracksToFetch[ id ] = resolve;
 	} );
 	setTimeout( async () => {
-		const ids = Object.keys( cruiseTracksToFetch );
-		if (ids.length) {
-			const resolvers = cruiseTracksToFetch;
-			cruiseTracksToFetch = {};
+		const entries = Object.entries( cruiseTracksToFetch );
+		if (entries.length) {
+			trackFetchingTasks++;
+			let resolvers;
+			if (entries.length > 50) {
+				resolvers = Object.fromEntries( entries.slice( 0, 50 ) );
+				cruiseTracksToFetch = Object.fromEntries( entries.slice( 50 ) );
+			}
+			else {
+				resolvers = cruiseTracksToFetch;
+				cruiseTracksToFetch = {};
+			}
+			const ids = Object.keys( resolvers );
 			const data = await connector.send( apiEntries.points, { id: ids, progress: 1 } );
 			for (const id of Object.keys( data )) {
 				resolvers[ id ]( data[ id ] );
 			}
+			trackFetchingTasks--;
+			if (!trackFetchingTasks && !progressiveFetchingTasks) doFetchTracks();
 		}
 	}, 10 );
 
@@ -548,24 +560,27 @@ function queueFetchTrackProgressive( id: string, stage: number, highPriority: bo
 		if (highPriority) cruiseTracksToFetchQueue.unshift( item );
 		else cruiseTracksToFetchQueue.push( item );
 
-		if (!tracksFetching) doFetchTracks();
+		if (!progressiveFetchingTasks) doFetchTracks();
 
 		return item.promise;
 	}
 }
 
+let progressiveFetchingTasks = 0;
 function doFetchTracks() {
-	if (!tracksFetching && !!cruiseTracksToFetchQueue.length) {
-		tracksFetching = true;
-		const item = cruiseTracksToFetchQueue.shift();
-		const fetching =
-			connector.send( apiEntries.points, { id: item.id, progress: item.stage } )
-			.then( data => data[ item.id ] );
-		fetching.then( () => {
-			tracksFetching = false;
-			if (!!cruiseTracksToFetchQueue.length) doFetchTracks();
-		} );
-		item.resolver( fetching );
+	if (progressiveFetchingTasks < 5 && !trackFetchingTasks && !!cruiseTracksToFetchQueue.length) {
+		while (progressiveFetchingTasks < 5 && !!cruiseTracksToFetchQueue.length) {
+			progressiveFetchingTasks++;
+			const item = cruiseTracksToFetchQueue.shift();
+			const fetching =
+				connector.send( apiEntries.points, { id: item.id, progress: item.stage } )
+				.then( data => data[ item.id ] );
+			fetching.then( () => {
+				progressiveFetchingTasks--;
+				if (!!cruiseTracksToFetchQueue.length) doFetchTracks();
+			} );
+			item.resolver( fetching );
+		}
 	}
 }
 

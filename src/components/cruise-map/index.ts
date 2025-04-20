@@ -570,6 +570,11 @@ class ShipMarker implements InteractiveMapMarker {
 				this.events.dispatchEvent(new Event('locationchange'));
 			}
 		}
+		else {
+			this.lat = 0;
+			this.lng = 0;
+			this.rotateAngle = 0;
+		}
 	}
 
 	activate() {
@@ -702,6 +707,7 @@ class CruiseAssets {
 	declare map: CruiseMap;
 	declare cruise: Cruise;
 	declare polyline?: InteractiveMapPolyline | undefined;
+	declare _isDeleted: boolean;
 	_trackVisible: boolean = false;
 	stops: Record<string, InteractiveMapMarker> = {};
 	_stopsVisible: boolean = false;
@@ -726,7 +732,7 @@ class CruiseAssets {
 
 	loadTrackProgressive() {
 		this.cruise.route.then( route => {
-			if (this.cruise.routeReadyStage > 0 && this.cruise.routeReadyStage < 4) {
+			if (!this._isDeleted && this.cruise.routeReadyStage > 0 && this.cruise.routeReadyStage < 4) {
 				const highPriority = this.cruise === this.map.selectedShip?.activeCruise;
 				this.cruise.loadTrackProgressive( highPriority )
 					.then( () => {
@@ -738,7 +744,7 @@ class CruiseAssets {
 						}
 						const ship = this.map.shipMarker( this.cruise.ship.id );
 						if (ship) ship.move( this.map.timelinePoint );
-						if (this.cruise.routeReadyStage < 4) this.loadTrackProgressive();
+						if (!this._isDeleted && this.cruise.routeReadyStage < 4) this.loadTrackProgressive();
 					} );
 			}
 		} );
@@ -747,6 +753,7 @@ class CruiseAssets {
 	remove() {
 		this.hideAll();
 		this.cruise.cancelLoadTrack();
+		this._isDeleted = true;
 	}
 
 	showAll() {
