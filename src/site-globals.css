@@ -2913,7 +2913,7 @@ body .leaflet-popup-tip {
     padding-bottom: 7px;
   }
 }
-@media (max-width: 900px) {
+@media (max-width: 1600px) {
   :root {
     --height: 50px;
   }

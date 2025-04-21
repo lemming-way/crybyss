@@ -303,7 +303,7 @@ body .rs-tooltip {
   height: calc(var(--height) - 10px);
 }
 
-@media (max-width: 900px) {
+@media (max-width: 1600px) {
   .map-overlay--buttons-wrapper {
     display: block;
     height: auto;
@@ -327,7 +327,7 @@ body .rs-tooltip {
   gap: 10px;
 }
 
-@media (max-width: 900px) {
+@media (max-width: 1600px) {
   .map-overlay--buttons-content {
     flex-direction: column;
     padding: 7px;
@@ -359,7 +359,7 @@ body .rs-tooltip {
   color: #fff;
 }
 
-@media (max-width: 900px) {
+@media (max-width: 1600px) {
   .map-overlay--btn {
     border-radius: 6px;
     width: calc(var(--height) - 11px);
@@ -386,7 +386,7 @@ body .rs-tooltip {
   background-color: var(--main);
 }
 
-@media (min-width: 901px) {
+@media (min-width: 1601px) {
   .map-overlay--btn:hover {
     background-color: var(--main);
   }
@@ -397,7 +397,7 @@ body .rs-tooltip {
   background-color: #fff;
 }
 
-@media (min-width: 901px) {
+@media (min-width: 1601px) {
   .map-overlay--btn.active:hover {
     background-color: #fff;
   }
@@ -423,14 +423,14 @@ body .rs-tooltip {
   line-height: 0;
 }
 
-@media (min-width: 901px) {
+@media (min-width: 1601px) {
   .map-overlay--menu .open,
   .map-overlay--menu .close {
     display: none;
   }
 }
 
-@media (max-width: 900px) {
+@media (max-width: 1600px) {
   .map-overlay--menu {
     position: absolute;
     order: unset;
@@ -467,7 +467,7 @@ body .rs-tooltip {
   right: calc(var(--height) * 2 + 30px);
 }
 
-@media (max-width: 900px) {
+@media (max-width: 1600px) {
   .map-overlay--time {
     right: 118px;
   }
@@ -486,7 +486,7 @@ body .rs-tooltip {
   right: calc(var(--height) + 25px);
 }
 
-@media (max-width: 900px) {
+@media (max-width: 1600px) {
   .map-overlay--line {
     right: 69px;
   }
@@ -523,7 +523,7 @@ body .rs-tooltip {
   background-color: #fff;
 }
 
-@media (max-width: 900px) {
+@media (max-width: 1600px) {
   .map-overlay--layers {
     left: unset;
     right: calc(var(--height) + 30px);
@@ -769,7 +769,7 @@ body .map-overlay--range-dates .rs-container .rs-pointer {
   transition-property: fill, stroke;
 }
 
-@media (max-width: 900px) {
+@media (max-width: 1600px) {
   .map-overlay--btn svg {
     width: 20px;
     height: 20px;
@@ -781,7 +781,7 @@ body .map-overlay--range-dates .rs-container .rs-pointer {
   stroke: #ffffff;
 }
 
-@media (min-width: 901px) {
+@media (min-width: 1601px) {
   .map-overlay--btn-primary-stroke:hover svg *,
   .map-overlay--btn:hover .map-overlay--btn-primary-stroke svg * {
     stroke: #ffffff;
@@ -792,7 +792,7 @@ body .map-overlay--range-dates .rs-container .rs-pointer {
   stroke: var(--main);
 }
 
-@media (min-width: 901px) {
+@media (min-width: 1601px) {
   .map-overlay--btn.active:hover .map-overlay--btn-primary-stroke svg *,
   .map-overlay--btn-primary-stroke.active:hover svg * {
     stroke: var(--main);
@@ -805,7 +805,7 @@ body .map-overlay--range-dates .rs-container .rs-pointer {
   stroke: var(--main);
 }
 
-@media (min-width: 901px) {
+@media (min-width: 1601px) {
   .map-overlay--btn:hover .map-overlay--btn-primary-fill svg *,
   .map-overlay--btn-primary-fill:hover svg * {
     fill: #ffffff;
@@ -818,7 +818,7 @@ body .map-overlay--range-dates .rs-container .rs-pointer {
   stroke: #ffffff;
 }
 
-@media (min-width: 901px) {
+@media (min-width: 1601px) {
   .map-overlay--btn-primary-fill.active:hover svg *,
   .map-overlay--btn.active:hover .map-overlay--btn-primary-fill svg * {
     fill: var(--main);
@@ -939,7 +939,7 @@ body .map-overlay--range-dates .rs-container .rs-pointer {
   letter-spacing: -0.2px;
 }
 
-@media (max-width: 1199px) {
+@media (max-width: 1600px) {
   .map-overlay--ships-wrapper {
     display: none;
   }
@@ -1045,7 +1045,7 @@ body .map-overlay--range-dates .rs-container .rs-pointer {
   border-radius: unset;
 }
 
-@media (max-width: 900px) {
+@media (max-width: 1600px) {
   .cruise-page .map-overlay--buttons-wrapper.active {
     display: flex;
     background: transparent;
