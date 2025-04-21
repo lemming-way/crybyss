@@ -99,16 +99,16 @@ export default class MapOverlay extends DOMComponent {
 				const target = event.currentTarget as HTMLElement;
 				setTimeout (() => {
 					if (target.classList.contains( 'active' )) {
-						if (target === menuBtn && window.innerWidth < 901) {
+						if (target === menuBtn && window.innerWidth < 1401) {
 							if (clockBtn?.classList.contains( 'active' )) clockBtn.click();
 							if (layersBtn) layersBtn.classList.remove( 'active' );
 						}
 						else if (target === clockBtn) {
-							if (mapMode === 'default' && window.innerWidth < 901 && menuBtn) menuBtn.classList.remove( 'active' );
+							if (mapMode === 'default' && window.innerWidth < 1401 && menuBtn) menuBtn.classList.remove( 'active' );
 							if (layersBtn) layersBtn.classList.remove( 'active' );
 						}
 						else if (target === layersBtn) {
-							if (mapMode === 'default' && window.innerWidth < 901 && menuBtn) menuBtn.classList.remove( 'active' );
+							if (mapMode === 'default' && window.innerWidth < 1401 && menuBtn) menuBtn.classList.remove( 'active' );
 							if (clockBtn?.classList.contains( 'active' )) clockBtn.click();
 						}
 					}
@@ -771,7 +771,7 @@ class DateFilter {
 		}
 
 		window.addEventListener("DOMContentLoaded", () => {
-			if (window.innerWidth < 901 && !document.body.classList.contains('cruise-page')) {
+			if (window.innerWidth < 1401 && !document.body.classList.contains('cruise-page')) {
 				const menuBtn = document.querySelector(".map-overlay--menu") as HTMLElement;
 				if (menuBtn) menuBtn.classList.remove("active");
 			}

@@ -303,15 +303,21 @@ body .rs-tooltip {
   height: calc(var(--height) - 10px);
 }
 
-@media (max-width: 900px) {
+@media (max-width: 1400px) {
   .map-overlay--buttons-wrapper {
     display: block;
     height: auto;
     left: auto;
-    top: 74px;
-    right: 167px;
+    top: calc(20px + var(--height) + 15px);
+    right: calc(var(--height) * 3 + 35px);
     background: #fff;
     border-radius: 7px;
+  }
+}
+
+@media (max-width: 900px) {
+  .map-overlay--buttons-wrapper {
+    right: calc(var(--height) * 3 + 17px);
   }
 }
 
@@ -327,7 +333,7 @@ body .rs-tooltip {
   gap: 10px;
 }
 
-@media (max-width: 900px) {
+@media (max-width: 1400px) {
   .map-overlay--buttons-content {
     flex-direction: column;
     padding: 7px;
@@ -359,7 +365,7 @@ body .rs-tooltip {
   color: #fff;
 }
 
-@media (max-width: 900px) {
+@media (max-width: 1400px) {
   .map-overlay--btn {
     border-radius: 6px;
     width: calc(var(--height) - 11px);
@@ -386,19 +392,30 @@ body .rs-tooltip {
   background-color: var(--main);
 }
 
-@media (min-width: 901px) {
-  .map-overlay--btn:hover {
+@media (min-width: 1401px) {
+  .map-overlay--buttons-content .map-overlay--btn:hover {
     background-color: var(--main);
   }
 }
 
+@media (min-width: 901px) {
+  :not(.map-overlay--buttons-content) > .map-overlay--btn:hover {
+    background-color: var(--main);
+  }
+}
 
 .map-overlay--btn {
   background-color: #fff;
 }
 
+@media (min-width: 1401px) {
+  .map-overlay--buttons-content .map-overlay--btn.active:hover {
+    background-color: #fff;
+  }
+}
+
 @media (min-width: 901px) {
-  .map-overlay--btn.active:hover {
+  :not(.map-overlay--buttons-content) > .map-overlay--btn.active:hover {
     background-color: #fff;
   }
 }
@@ -423,18 +440,18 @@ body .rs-tooltip {
   line-height: 0;
 }
 
-@media (min-width: 901px) {
+@media (min-width: 1401px) {
   .map-overlay--menu .open,
   .map-overlay--menu .close {
     display: none;
   }
 }
 
-@media (max-width: 900px) {
+@media (max-width: 1400px) {
   .map-overlay--menu {
     position: absolute;
     order: unset;
-    top: calc(-4px - var(--height));
+    top: calc(-15px - var(--height));
     right: 0;
     display: flex;
     width: calc(var(--height) - 11px);
@@ -469,7 +486,7 @@ body .rs-tooltip {
 
 @media (max-width: 900px) {
   .map-overlay--time {
-    right: 118px;
+    right: calc(var(--height) * 2 + 18px);
   }
 }
 
@@ -488,7 +505,7 @@ body .rs-tooltip {
 
 @media (max-width: 900px) {
   .map-overlay--line {
-    right: 69px;
+    right: calc(var(--height) + 19px);
   }
 }
 
@@ -781,9 +798,16 @@ body .map-overlay--range-dates .rs-container .rs-pointer {
   stroke: #ffffff;
 }
 
+@media (min-width: 1401px) {
+  .map-overlay--buttons-content .map-overlay--btn-primary-stroke:hover svg *,
+  .map-overlay--buttons-content .map-overlay--btn:hover .map-overlay--btn-primary-stroke svg * {
+    stroke: #ffffff;
+  }
+}
+
 @media (min-width: 901px) {
-  .map-overlay--btn-primary-stroke:hover svg *,
-  .map-overlay--btn:hover .map-overlay--btn-primary-stroke svg * {
+  :not(.map-overlay--buttons-content) > .map-overlay--btn-primary-stroke:hover svg *,
+  :not(.map-overlay--buttons-content) > .map-overlay--btn:hover .map-overlay--btn-primary-stroke svg * {
     stroke: #ffffff;
   }
 }
@@ -792,9 +816,16 @@ body .map-overlay--range-dates .rs-container .rs-pointer {
   stroke: var(--main);
 }
 
+@media (min-width: 1401px) {
+  .map-overlay--buttons-content .map-overlay--btn.active:hover .map-overlay--btn-primary-stroke svg *,
+  .map-overlay--buttons-content .map-overlay--btn-primary-stroke.active:hover svg * {
+    stroke: var(--main);
+  }
+}
+
 @media (min-width: 901px) {
-  .map-overlay--btn.active:hover .map-overlay--btn-primary-stroke svg *,
-  .map-overlay--btn-primary-stroke.active:hover svg * {
+  :not(.map-overlay--buttons-content) > .map-overlay--btn.active:hover .map-overlay--btn-primary-stroke svg *,
+  :not(.map-overlay--buttons-content) > .map-overlay--btn-primary-stroke.active:hover svg * {
     stroke: var(--main);
   }
 }
@@ -805,9 +836,17 @@ body .map-overlay--range-dates .rs-container .rs-pointer {
   stroke: var(--main);
 }
 
+@media (min-width: 1401px) {
+  .map-overlay--buttons-content .map-overlay--btn:hover .map-overlay--btn-primary-fill svg *,
+  .map-overlay--buttons-content .map-overlay--btn-primary-fill:hover svg * {
+    fill: #ffffff;
+    stroke: var(--main);
+  }
+}
+
 @media (min-width: 901px) {
-  .map-overlay--btn:hover .map-overlay--btn-primary-fill svg *,
-  .map-overlay--btn-primary-fill:hover svg * {
+  :not(.map-overlay--buttons-content) > .map-overlay--btn:hover .map-overlay--btn-primary-fill svg *,
+  :not(.map-overlay--buttons-content) > .map-overlay--btn-primary-fill:hover svg * {
     fill: #ffffff;
     stroke: var(--main);
   }
@@ -818,9 +857,17 @@ body .map-overlay--range-dates .rs-container .rs-pointer {
   stroke: #ffffff;
 }
 
+@media (min-width: 1401px) {
+  .map-overlay--buttons-content .map-overlay--btn-primary-fill.active:hover svg *,
+  .map-overlay--buttons-content .map-overlay--btn.active:hover .map-overlay--btn-primary-fill svg * {
+    fill: var(--main);
+    stroke: #ffffff;
+  }
+}
+
 @media (min-width: 901px) {
-  .map-overlay--btn-primary-fill.active:hover svg *,
-  .map-overlay--btn.active:hover .map-overlay--btn-primary-fill svg * {
+  :not(.map-overlay--buttons-content) > .map-overlay--btn-primary-fill.active:hover svg *,
+  :not(.map-overlay--buttons-content) > .map-overlay--btn.active:hover .map-overlay--btn-primary-fill svg * {
     fill: var(--main);
     stroke: #ffffff;
   }
@@ -927,7 +974,7 @@ body .map-overlay--range-dates .rs-container .rs-pointer {
 .map-overlay--ships-wrapper {
   position: absolute;
   top: 20px;
-  right: 216px;
+  right: calc(var(--height) * 3 + 35px);
   padding: 16px;
   height: 48px;
   width: 250px;
@@ -939,7 +986,13 @@ body .map-overlay--range-dates .rs-container .rs-pointer {
   letter-spacing: -0.2px;
 }
 
-@media (max-width: 1199px) {
+@media (max-width: 1400px) {
+  .map-overlay--ships-wrapper {
+    right: calc(var(--height) * 4 + 40px);
+  }
+}
+
+@media (max-width: 1300px) {
   .map-overlay--ships-wrapper {
     display: none;
   }
@@ -959,8 +1012,8 @@ body .map-overlay--range-dates .rs-container .rs-pointer {
   align-items: baseline;
   gap: 20px;
   top: 14px;
-  left: 50%;
-  transform: translateX(-40%);
+  left: calc(811px + (100% - 1400px) / 2);
+  transform: translateX(-50%);
   padding: 20px;
   padding-top: 16px;
   padding-bottom: 15px;
@@ -987,6 +1040,12 @@ body .map-overlay--range-dates .rs-container .rs-pointer {
   font-weight: 600;
   line-height: 120%;
   letter-spacing: -1.4px;
+}
+
+@media (max-width: 1400px) {
+  .map-overlay--time-indicator {
+    left: 50%;
+  }
 }
 
 @media (max-width: 900px) {
