@@ -88,29 +88,12 @@ export default class MapOverlay extends DOMComponent {
 		setOverlayBounds();
 		window.addEventListener("resize", setOverlayBounds);
 
-<<<<<<< HEAD
-    // кнопки
-    const gatewaysButton = document.querySelector('.map-overlay--gateways') as HTMLInputElement;
-    if (gatewaysButton) gatewaysButton.click();
-    const sightsButton = document.querySelector('.map-overlay--place') as HTMLInputElement;
-    if (sightsButton) sightsButton.click();
-    const anchorButton = document.querySelector('.map-overlay--anchor') as HTMLInputElement;
-    if (anchorButton) anchorButton.click();
-    const sunriseButton = document.querySelector('.map-overlay--sunrise') as HTMLInputElement;
-    if (sunriseButton) sunriseButton.click();
-    const sunsetButton = document.querySelector('.map-overlay--sunset') as HTMLInputElement;
-    if (sunsetButton) sunsetButton.click();
+		const mapMode = cruiseMap.mapMode;
 
-
-    // страница круиза начало
-    if (document.location.href.includes('cruise=')) {
-      document.body.classList.add('cruise-page');
-=======
 		window.addEventListener("cruisesDataLoaded", () => {
 			const menuBtn = ( domNode as HTMLElement ).querySelector( ".map-overlay--menu" ) as HTMLElement;
 			const clockBtn = ( domNode as HTMLElement ).querySelector( ".map-overlay--time" ) as HTMLElement;
 			const layersBtn = ( domNode as HTMLElement ).querySelector( ".map-overlay--copy" ) as HTMLElement;
->>>>>>> main
 
 			const radioButtons = ( event: Event ) => {
 				const target = event.currentTarget as HTMLElement;
@@ -121,11 +104,11 @@ export default class MapOverlay extends DOMComponent {
 							if (layersBtn) layersBtn.classList.remove( 'active' );
 						}
 						else if (target === clockBtn) {
-							if (window.innerWidth < 901 && menuBtn) menuBtn.classList.remove( 'active' );
+							if (mapMode === 'default' && window.innerWidth < 901 && menuBtn) menuBtn.classList.remove( 'active' );
 							if (layersBtn) layersBtn.classList.remove( 'active' );
 						}
 						else if (target === layersBtn) {
-							if (window.innerWidth < 901 && menuBtn) menuBtn.classList.remove( 'active' );
+							if (mapMode === 'default' && window.innerWidth < 901 && menuBtn) menuBtn.classList.remove( 'active' );
 							if (clockBtn?.classList.contains( 'active' )) clockBtn.click();
 						}
 					}
@@ -136,57 +119,8 @@ export default class MapOverlay extends DOMComponent {
 				element?.addEventListener( 'click', radioButtons );
 			}
 
-<<<<<<< HEAD
-            const pointElement = document.createElement('div');
-            pointElement.className = 'range--deco range--deco-point';
-            pointElement.textContent = date.toLocaleDateString('ru-RU', {
-              day: '2-digit',
-              month: '2-digit'
-            });
-            
-            // Вычисляем позицию точки на основе временных меток
-            const timeDifference = date.getTime() - departureDate.getTime();
-            const progress = (timeDifference / totalDuration) * 100;
-            markerElement.style.left = `${progress}%`;
-            pointElement.style.left = `${progress}%`;
-            
-            pointsContainer?.appendChild(markerElement);
-            pointsContainer?.appendChild(pointElement);
-          });
-        }
-      });
-    }
-    // страница круиза конец
-    // страница стоянок начало
-    if (new URL(location.toString()).searchParams.get('stops')) {
-      document.body.classList.add('stops-page');
-      if (new URL(location.toString()).searchParams.get('stops') !== 'true') document.body.classList.add('one-stop-page');
-      const shipButton = document.querySelector('.map-overlay--ship') as HTMLInputElement;
-      if (shipButton) shipButton.click();
-      const anchorButton = document.querySelector('.map-overlay--anchor') as HTMLInputElement;
-      if (anchorButton) anchorButton.click();
-    }
-    // страница стоянок конец
-    // страница достопримечательностей начало
-    if (new URL(location.toString()).searchParams.get('place')) {
-      document.body.classList.add('stops-page');
-      if (new URL(location.toString()).searchParams.get('place') !== 'true') document.body.classList.add('one-stop-page');
-      const shipButton = document.querySelector('.map-overlay--ship') as HTMLInputElement;
-      if (shipButton) shipButton.click();
-      const sightsButton = document.querySelector('.map-overlay--place') as HTMLInputElement;
-      if (sightsButton) sightsButton.click();
-    }
-    // страница достопримечательностей конец
-    // яндекс
-    const yandexMap = document.querySelector('.map-overlay--overlays-box #over2') as HTMLElement;
-    console.log('yandexMap', yandexMap)
-    if (yandexMap) yandexMap.click();
-  }
-=======
 			( domNode as HTMLElement ).style.removeProperty( 'display' );
 		}, { once: true });
-
-		const mapMode = cruiseMap.mapMode;
 
 		// страница круиза начало
 		if (mapMode === 'cruise') {
@@ -279,7 +213,6 @@ export default class MapOverlay extends DOMComponent {
 		const yandexMap = document.querySelector('.map-overlay--overlays-box #over2') as HTMLElement;
 		if (yandexMap) yandexMap.click();
 	}
->>>>>>> main
 }
 
 // Недоделано: чекбоксы создаются костыльно (?)
@@ -618,22 +551,22 @@ class DateFilter {
 
 			if (timeValue) {
 				const [day, month, year] = dateValue.split(".");
-				const [hours, minutes, seconds] = timeValue.split(":");
+				let [hours, minutes, seconds = "00"] = timeValue.split(":");
 
 				finalDate = new Date(
-					parseInt(year),
-					parseInt(month) - 1,
-					parseInt(day),
-					parseInt(hours),
-					parseInt(minutes),
-					parseInt(seconds)
+					Number(year),
+					Number(month) - 1,
+					Number(day),
+					Number(hours),
+					Number(minutes),
+					Number(seconds)
 				);
 			} else {
 				const [day, month, year] = dateValue.split(".");
 				finalDate = new Date(
-					parseInt(year),
-					parseInt(month) - 1,
-					parseInt(day)
+					Number(year),
+					Number(month) - 1,
+					Number(day)
 				);
 			}
 
