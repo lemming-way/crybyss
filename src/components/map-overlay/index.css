@@ -1104,7 +1104,7 @@ body .map-overlay--range-dates .rs-container .rs-pointer {
   border-radius: unset;
 }
 
-@media (max-width: 900px) {
+@media (max-width: 1400px) {
   .cruise-page .map-overlay--buttons-wrapper.active {
     display: flex;
     background: transparent;
@@ -1130,9 +1130,16 @@ body .map-overlay--range-dates .rs-container .rs-pointer {
   }
 
   .cruise-page .map-overlay--buttons-content .map-overlay--btn svg {
+    width: 28px;
+    height: 28px;
+    margin-right: 0;
+  }
+}
+
+@media (max-width: 900px) {
+  .cruise-page .map-overlay--buttons-content .map-overlay--btn svg {
     width: 20px;
     height: 20px;
-    margin-right: 0;
   }
 }
 
