@@ -252,18 +252,20 @@ export default class CruiseMap {
 			shipMarker.activate();
 			const cruise = ship.cruises()[Symbol.iterator]().next().value;
 			cruise?.route.then( ( route: CruiseRoute ) => {
-				const [ latitudes, longitudes ] = route.points.reduce( ( ret, point ) => {
-					ret[0].push( point.lat );
-					ret[1].push( point.lng );
-					return ret;
-				}, [ [], [] ] );
+				if (!!route.points.length) {
+					const [ latitudes, longitudes ] = route.points.reduce( ( ret, point ) => {
+						ret[0].push( point.lat );
+						ret[1].push( point.lng );
+						return ret;
+					}, [ [], [] ] );
 
-				const north = Math.max( ...latitudes );
-				const south = Math.min( ...latitudes );
-				const west = Math.min( ...longitudes );
-				const east = Math.max( ...longitudes );
+					const north = Math.max( ...latitudes );
+					const south = Math.min( ...latitudes );
+					const west = Math.min( ...longitudes );
+					const east = Math.max( ...longitudes );
 
-				this.map.fitBounds( south, west, north, east );
+					this.map.fitBounds( south, west, north, east );
+				}
 			} );
 		}
 
@@ -635,6 +637,8 @@ class ShipMarker implements InteractiveMapMarker {
 			this.map.addInteractiveMarker( 'ship', this );
 			if (this.activeCruise && this === this.map.selectedShip ) {
 				this.map.cruiseAsset( this.activeCruise.id ).showTrack( this.marker );
+				this.icon.classList.add( 'active' );
+				this.marker?.setZIndexOffset( 10000 );
 			}
 
 			let timer: ReturnType<typeof setTimeout>;
