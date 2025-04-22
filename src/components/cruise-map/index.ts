@@ -505,6 +505,9 @@ class ShipMarker implements InteractiveMapMarker {
 				activeCruise.hideTrack();
 			}
 			this.activeCruise = cruise;
+			if (cruise) {
+				this.map.cruiseAsset( cruise.id )?.loadTrackProgressive();
+			}
 			this.map.updateShipsCounter();
 		}
 
@@ -723,31 +726,27 @@ class CruiseAssets {
 	constructor( map: CruiseMap, cruise: Cruise ) {
 		this.map = map;
 		this.cruise = cruise;
-		this.loadTrackProgressive();
 	}
 
 	setHighPriorityLoading( highPriority: boolean ) {
 		this.cruise.setHighPriorityLoading( highPriority );
 	}
 
-	loadTrackProgressive() {
-		this.cruise.route.then( route => {
-			if (!this._isDeleted && this.cruise.routeReadyStage > 0 && this.cruise.routeReadyStage < 4) {
-				const highPriority = this.cruise === this.map.selectedShip?.activeCruise;
-				this.cruise.loadTrackProgressive( highPriority )
-					.then( () => {
-						if (this.polyline) {
-							const points = route.points.map(({lat, lng}) => ({lat, lng}));
-							if (this._trackVisible) this.map.clearPolyline( 'track', this.polyline );
-							this.polyline.points = points;
-							if (this._trackVisible) this.map.drawPolyline( 'track', this.polyline );
-						}
-						const ship = this.map.shipMarker( this.cruise.ship.id );
-						if (ship) ship.move( this.map.timelinePoint );
-						if (!this._isDeleted && this.cruise.routeReadyStage < 4) this.loadTrackProgressive();
-					} );
+	async loadTrackProgressive() {
+		const route = await this.cruise.route;
+		if (!this._isDeleted && this.cruise.routeReadyStage > 0 && this.cruise.routeReadyStage < 4) {
+			const highPriority = this.cruise === this.map.selectedShip?.activeCruise;
+			await this.cruise.loadTrackProgressive( highPriority )
+			if (this.polyline) {
+				const points = route.points.map(({lat, lng}) => ({lat, lng}));
+				if (this._trackVisible) this.map.clearPolyline( 'track', this.polyline );
+				this.polyline.points = points;
+				if (this._trackVisible) this.map.drawPolyline( 'track', this.polyline );
 			}
-		} );
+			const ship = this.map.shipMarker( this.cruise.ship.id );
+			if (ship) ship.move( this.map.timelinePoint );
+			if (!this._isDeleted && this.cruise.routeReadyStage < 4) this.loadTrackProgressive();
+		}
 	}
 
 	remove() {
