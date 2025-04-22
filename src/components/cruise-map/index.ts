@@ -257,7 +257,7 @@ export default class CruiseMap {
 			return;
 		const cruise = this._cruises.get(id);
 		this._cruises.delete(id);
-		cruise.hideAll();
+		cruise.remove();
 	}
 
 	addShip(ship: Ship) {
@@ -275,18 +275,20 @@ export default class CruiseMap {
 			shipMarker.activate();
 			const cruise = ship.cruises()[Symbol.iterator]().next().value;
 			cruise?.route.then( ( route: CruiseRoute ) => {
-				const [ latitudes, longitudes ] = route.points.reduce( ( ret, point ) => {
-					ret[0].push( point.lat );
-					ret[1].push( point.lng );
-					return ret;
-				}, [ [], [] ] );
+				if (!!route.points.length) {
+					const [ latitudes, longitudes ] = route.points.reduce( ( ret, point ) => {
+						ret[0].push( point.lat );
+						ret[1].push( point.lng );
+						return ret;
+					}, [ [], [] ] );
 
-				const north = Math.max( ...latitudes );
-				const south = Math.min( ...latitudes );
-				const west = Math.min( ...longitudes );
-				const east = Math.max( ...longitudes );
+					const north = Math.max( ...latitudes );
+					const south = Math.min( ...latitudes );
+					const west = Math.min( ...longitudes );
+					const east = Math.max( ...longitudes );
 
-				this.map.fitBounds( south, west, north, east );
+					this.map.fitBounds( south, west, north, east );
+				}
 			} );
 		}
 
@@ -507,7 +509,7 @@ class ShipMarker implements InteractiveMapMarker {
 		this.datetime = datetime;
 		const cruises = this.ship.cruisesOn( datetime );
 		const cruise = this.ship.cruiseOn( datetime );
-		if (!cruise?.routeReady) this._removeMarker();
+		if (!cruise?.routeReadyStage) this._removeMarker();
 
 		for (const cruise of this.cruises) {
 			if (!cruises.includes( cruise )) {
@@ -522,14 +524,25 @@ class ShipMarker implements InteractiveMapMarker {
 		this.cruises = cruises;
 
 		if (cruise !== this.activeCruise) {
-			this.map.cruiseAsset( this.activeCruise?.id )?.hideTrack();
+			const activeCruise = this.map.cruiseAsset( this.activeCruise?.id );
+			if (activeCruise) {
+				activeCruise.setHighPriorityLoading( false );
+				activeCruise.hideTrack();
+			}
 			this.activeCruise = cruise;
+			if (cruise) {
+				this.map.cruiseAsset( cruise.id )?.loadTrackProgressive();
+			}
 			this.map.updateShipsCounter();
 		}
 
 		if (this === this.map.selectedShip) {
 			for (const cruise of cruises) {
 				this.map.cruiseAsset( cruise.id )?.showAll();
+			}
+			const activeCruise = this.map.cruiseAsset( this.activeCruise?.id );
+			if (activeCruise) {
+				activeCruise.setHighPriorityLoading( true );
 			}
 		}
 
@@ -585,6 +598,11 @@ class ShipMarker implements InteractiveMapMarker {
 				this.events.dispatchEvent(new Event('locationchange'));
 			}
 		}
+		else {
+			this.lat = 0;
+			this.lng = 0;
+			this.rotateAngle = 0;
+		}
 	}
 
 	activate() {
@@ -596,7 +614,13 @@ class ShipMarker implements InteractiveMapMarker {
 			for (const cruise of this.cruises) {
 				this.map.cruiseAsset( cruise.id ).showAll();
 			}
-			if (this.marker) this.map.cruiseAsset( this.activeCruise?.id )?.showTrack( this.marker );
+			if (this.marker) {
+				const activeCruise = this.map.cruiseAsset( this.activeCruise?.id );
+				if (activeCruise) {
+					activeCruise.setHighPriorityLoading( true );
+					activeCruise.showTrack( this.marker );
+				}
+			}
 		}
 	}
 
@@ -607,6 +631,10 @@ class ShipMarker implements InteractiveMapMarker {
 			this.map.selectedShip = undefined;
 			for (const cruise of this.cruises) {
 				this.map.cruiseAsset( cruise.id ).hideAll();
+			}
+			const activeCruise = this.map.cruiseAsset( this.activeCruise?.id );
+			if (activeCruise) {
+				activeCruise.setHighPriorityLoading( false );
 			}
 		}
 	}
@@ -632,6 +660,8 @@ class ShipMarker implements InteractiveMapMarker {
 			this.map.addInteractiveMarker( 'ship', this );
 			if (this.activeCruise && this === this.map.selectedShip ) {
 				this.map.cruiseAsset( this.activeCruise.id ).showTrack( this.marker );
+				this.icon.classList.add( 'active' );
+				this.marker?.setZIndexOffset( 10000 );
 			}
 
 			let timer: ReturnType<typeof setTimeout>;
@@ -707,6 +737,8 @@ class CruiseAssets {
 	declare map: CruiseMap;
 	declare cruise: Cruise;
 	declare polyline?: InteractiveMapPolyline | undefined;
+	declare _isDeleted: boolean;
+	_trackVisible: boolean = false;
 	stops: Record<string, InteractiveMapMarker> = {};
 	_stopsVisible: boolean = false;
 	sights: Record<string, InteractiveMapMarker> = {};
@@ -721,6 +753,33 @@ class CruiseAssets {
 	constructor( map: CruiseMap, cruise: Cruise ) {
 		this.map = map;
 		this.cruise = cruise;
+	}
+
+	setHighPriorityLoading( highPriority: boolean ) {
+		this.cruise.setHighPriorityLoading( highPriority );
+	}
+
+	async loadTrackProgressive() {
+		const route = await this.cruise.route;
+		if (!this._isDeleted && this.cruise.routeReadyStage > 0 && this.cruise.routeReadyStage < 4) {
+			const highPriority = this.cruise === this.map.selectedShip?.activeCruise;
+			await this.cruise.loadTrackProgressive( highPriority )
+			if (this.polyline) {
+				const points = route.points.map(({lat, lng}) => ({lat, lng}));
+				if (this._trackVisible) this.map.clearPolyline( 'track', this.polyline );
+				this.polyline.points = points;
+				if (this._trackVisible) this.map.drawPolyline( 'track', this.polyline );
+			}
+			const ship = this.map.shipMarker( this.cruise.ship.id );
+			if (ship) ship.move( this.map.timelinePoint );
+			if (!this._isDeleted && this.cruise.routeReadyStage < 4) this.loadTrackProgressive();
+		}
+	}
+
+	remove() {
+		this.hideAll();
+		this.cruise.cancelLoadTrack();
+		this._isDeleted = true;
 	}
 
 	showAll() {
@@ -740,6 +799,9 @@ class CruiseAssets {
 	}
 
 	async showTrack( marker: Marker ) {
+		if (this._trackVisible) return;
+		this._trackVisible = true;
+
 		if (!this.polyline) {
 			const company = this.cruise.company;
 
@@ -768,11 +830,14 @@ class CruiseAssets {
 	}
 
 	hideTrack() {
-		if (this.polyline) {
-			this.map.clearPolyline( 'track', this.polyline );
+		if (this._trackVisible) {
+			this._trackVisible = false;
+			if (this.polyline) {
+				this.map.clearPolyline( 'track', this.polyline );
+			}
+			this.hideSunrises();
+			this.hideSunsets();
 		}
-		this.hideSunrises();
-		this.hideSunsets();
 	}
 
 	static async locationPopup( stop: Location, map: CruiseMap ): Promise<Element> {
@@ -846,8 +911,7 @@ class CruiseAssets {
 	}
 
 	private static async sunriseSunsetPopup( type: 'sunrise' | 'sunset', point: TrackPoint, map: CruiseMap ): Promise<Element> {
-		const {lat, lng, arrival} = point;
-		const side = '';
+		const {lat, lng, arrival, side} = point;
 		const title = type === 'sunset' ? 'Закат' : 'Восход';
 		const icon = type === 'sunset' ? sunsetIcon : sunriseIcon;
 		const itemDescription = LocatedItemDescription.create(

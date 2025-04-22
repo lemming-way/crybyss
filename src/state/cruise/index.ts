@@ -24,13 +24,17 @@ export interface Cruise {
 	url: string;
 	ship: Ship;
 	company: Company;
-	routeReady: boolean;
+	routeReadyStage: number;
 	stops: Promise<TrackLocation[]>;
 	sights: Promise<TrackLocation[]>;
 	gateways: Promise<TrackLocation[]>;
 	sunrises: Promise<TrackPoint[]>;
 	sunsets: Promise<TrackPoint[]>;
 	route: Promise<CruiseRoute>;
+
+	loadTrackProgressive: ( highPriority?: boolean ) => Promise<void>;
+	cancelLoadTrack: () => void;
+	setHighPriorityLoading: ( highPriority: boolean ) => void;
 }
 
 export const defaultCompanyColor = 0x7F7F7F;
@@ -79,8 +83,7 @@ export interface TrackPoint {
 	lng: number;
 	arrival: Date;
 	isStop: boolean;
-	sunrise?: boolean;
-	sunset?: boolean;
+	side?: 'left' | 'right';
 	angle?: number;
 }
 
