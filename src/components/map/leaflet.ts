@@ -74,16 +74,13 @@ export default abstract class LeafletMap extends Map {
     // линейка начало
 
     const measurePoints: L.CircleMarker<any>[] = [];
-    let isLine: boolean = false;
+    let measureLine: L.Polyline;
 
     const removeMeasure = () => {
       measurePoints.forEach((point) => point.remove());
       measurePoints.length = 0;
-      this.map.eachLayer((layer) => {
-        if (layer instanceof L.Polyline && !(layer instanceof L.Circle)) {
-          layer.remove();
-        }
-      });
+      measureLine?.remove();
+      measureLine = undefined;
     };
 
     const measureOpenButton = document.querySelector(".map-overlay--line");
@@ -107,9 +104,8 @@ export default abstract class LeafletMap extends Map {
     measureOpenButton?.addEventListener("click", toggleMeasure);
 
     this.map.on("mousedown", () => {
-      if (isLine) {
+      if (measureLine) {
         removeMeasure();
-        isLine = false;
       }
     });
 
@@ -129,14 +125,13 @@ export default abstract class LeafletMap extends Map {
 
       if (measurePoints.length > 1) {
         const lastPoint = measurePoints[measurePoints.length - 2];
-        const line = L.polyline([lastPoint.getLatLng(), circle.getLatLng()], {
+        measureLine = L.polyline([lastPoint.getLatLng(), circle.getLatLng()], {
           color: "red",
         }).addTo(this.map);
-        isLine = true;
 
         const distance = lastPoint.getLatLng().distanceTo(circle.getLatLng());
         const popupContent = `${(distance / 1000).toFixed(2)} км`;
-        line
+        measureLine
           .bindPopup(popupContent, {
             className: "measure__popup",
           })
