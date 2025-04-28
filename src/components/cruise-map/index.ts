@@ -169,7 +169,7 @@ export default class CruiseMap {
 			counter[ id ].timesAttached++;
 		}
 		else {
-			const marker = new LocationMarker( this.mapMode, type, category, lat, lng, popup );
+			const marker = new LocationMarker( type, category, lat, lng, popup );
 			layer.addInteractiveMarker( marker );
 			counter[ id ] = { marker, timesAttached: 1 };
 		}
@@ -365,18 +365,13 @@ class LocationMarker implements InteractiveMapMarker {
 	events = new TypedEventTarget();
 
 	constructor(
-		mapMode: string,
 		locationType: LocationType,
 		locationCategory: string,
 		lat: number,
 		lng: number,
 		popupContent: InteractiveMapMarker['popupContent'],
 	) {
-		if (
-			( mapMode === 'default' || mapMode === 'cruise' ) &&
-			locationType === LocationType.SHOWPLACE &&
-			++markersCounter % 20 !== 0
-		) {
+		if (locationType === LocationType.SHOWPLACE && ++markersCounter % 20 !== 0) {
 			const mainIcon = svgAsset( categorizedMarkers[ locationCategory ] ?? pillarMarkerIcon, 'collapsible' );
 			const iconColor = iconColors[ locationCategory ] ?? 'var(--main)';
 			const collapsedIcon = svgAsset( circleIcon, 'placeholder-icon' );
@@ -408,6 +403,7 @@ class LocationMarker implements InteractiveMapMarker {
 		this.lng = lng;
 		this.popupContent = popupContent;
 	}
+
 }
 
 class ShipMarker implements InteractiveMapMarker {
