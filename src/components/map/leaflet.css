@@ -36,6 +36,9 @@
 	height: var(--leaflet-marker-icon_height);
 	margin-left: calc(var(--leaflet-marker-icon_width) / -2);
 	margin-top: calc(var(--leaflet-marker-icon_height) / -2);
+	display: flex;
+	justify-content: center;
+	align-items: center;
 }
 
 .leaflet-marker-icon,

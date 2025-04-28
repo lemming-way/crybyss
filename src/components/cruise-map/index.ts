@@ -371,33 +371,24 @@ class LocationMarker implements InteractiveMapMarker {
 		lng: number,
 		popupContent: InteractiveMapMarker['popupContent'],
 	) {
-		if (locationType === LocationType.SHOWPLACE && ++markersCounter % 20 !== 0) {
-			const mainIcon = svgAsset( categorizedMarkers[ locationCategory ] ?? pillarMarkerIcon, 'collapsible' );
-			const iconColor = iconColors[ locationCategory ] ?? 'var(--main)';
-			const collapsedIcon = svgAsset( circleIcon, 'placeholder-icon' );
-			collapsedIcon.style.setProperty( '--cruise-map__marker_color', iconColor );
+		const markerType = 'cruise-map__marker_type_' + (
+			locationType === LocationType.REGULAR ? 'stop' :
+			locationType === LocationType.GATEWAY ? 'gateway' :
+			'place'
+		);
+		const iconString =
+			locationType === LocationType.REGULAR ? stopMarkerIcon :
+			locationType === LocationType.GATEWAY ? gatewayMarkerIcon :
+			categorizedMarkers[ locationCategory ] ?? pillarMarkerIcon;
 
-			const iconWrapper = document.createElement('div');
-			iconWrapper.classList.add( 'cruise-map__marker' );
-			iconWrapper.append( mainIcon, collapsedIcon );
-			this.icon = iconWrapper;
+		if (iconString.startsWith( '<svg' )) {
+			this.icon = svgAsset( iconString, 'cruise-map__marker', markerType );
 		}
 		else {
-			const iconString =
-				locationType === LocationType.REGULAR ? stopMarkerIcon :
-				locationType === LocationType.GATEWAY ? gatewayMarkerIcon :
-				categorizedMarkers[ locationCategory ] ?? pillarMarkerIcon;
-
-			if (iconString.startsWith( '<svg' )) {
-				this.icon = svgAsset( iconString, 'cruise-map__marker' );
-			}
-			else {
-				const icon = this.icon = document.createElement('img');
-				icon.src = iconString;
-				icon.classList.add('cruise-map__marker');
-			}
+			const icon = this.icon = document.createElement( 'img' );
+			icon.src = iconString;
+			icon.classList.add( 'cruise-map__marker', markerType );
 		}
-
 
 		this.lat = lat;
 		this.lng = lng;

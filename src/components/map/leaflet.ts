@@ -323,12 +323,8 @@ export default abstract class LeafletMap extends Map {
     // блок с кнопками масштабирования конец
 
     const getZoom = () => {
-      if (this.map.getZoom() >= 9) {
-        ( this.domNode as HTMLElement ).classList.remove( 'zoomed-out' );
-      }
-      else {
-        ( this.domNode as HTMLElement ).classList.add( 'zoomed-out' );
-      }
+      const zoomLevel = this.map.getZoom();
+      ( this.domNode as HTMLElement ).style.setProperty( '--map-zoom', String( zoomLevel ) );
     };
     this.map.on( 'zoomend', getZoom );
     getZoom();
