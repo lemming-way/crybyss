@@ -251,6 +251,7 @@ export default abstract class LeafletMap extends Map {
     // отрезок конец
     // подложка начало
     const OSM_TILE_LAYER_URL = "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
+    const DGIS_TILE_LAYER_URL = "https://tile2.maps.2gis.com/tiles?x={x}&y={y}&z={z}";
     ("https://core-sat.maps.yandex.net/tiles?l=sat&x={x}&y={y}&z={z}");
 
     const changeTileLayer = (url: string) => {
@@ -291,6 +292,9 @@ export default abstract class LeafletMap extends Map {
               break;
             case "over3":
               changeYandexLayer("satellite");
+              break;
+            case "over4":
+              changeTileLayer(DGIS_TILE_LAYER_URL);
               break;
           }
         }
