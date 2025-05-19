@@ -6,17 +6,17 @@ import {
 
 /// @todo: Конфиг вынести в отдельный файл
 const siteURL = 'https://krubiss.ru';
-const apiURL = 'https://krubiss.ru/api2';
+const apiURL = 'https://krubiss.ru/api/map';
 const apiEntries = {
-	start : '?service=map&method=start',
-	startCruise : '?service=map&method=start&option=cruise',
-	startStops : '?service=map&method=start&option=stops',
-	startSights : '?service=map&method=start&option=sights',
-	stops : '?service=map&method=stops',
-	cruiseSights : '?service=map&method=sights&option=byCruiseId',
-	sightsByIds : '?service=map&method=sights&option=byIds',
-	gateways : '?service=map&method=gateways',
-	points : '?service=map&method=points'
+	start : 'start',
+	startCruise : 'start/cruise',
+	startStops : 'start/stops',
+	startSights : 'start/sights',
+	stops : 'stops',
+	cruiseSights : 'sights/byCruiseId',
+	sightsByIds : 'sights/byIds',
+	gateways : 'gateways',
+	points : 'points'
 };
 
 const brandColors: Record<string, number> = {
@@ -512,7 +512,10 @@ class APIConnector {
 					body: JSON.stringify(data),
 					headers: {'content-type': 'application/json'},
 				});
-				return await response.json();
+				if (!response.ok) throw new Error( 'Data fetching error.' );
+				const result = await response.json();
+				if (result?.errors) throw new Error( result.errors.join( '; ' ) );
+				return result;
 			}
 			catch (e) {
 				await new Promise( resolve => setTimeout( resolve, sleepTime ) );
