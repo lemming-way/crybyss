@@ -19,7 +19,8 @@ const plugins = [
 if (!isProduction) {
 	plugins.push( new CopyPlugin({
 		patterns: [
-			{ from: 'src/site-globals.css', to: 'site-globals.css' }
+			{ from: 'src/site-globals.css', to: 'site-globals.css' },
+			{ from: 'src/fonts', to: 'fonts' }
 		]
 	}) )
 }
