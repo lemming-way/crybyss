@@ -132,23 +132,8 @@ export default class MapOverlay extends DOMComponent {
 				if (!ship || !cruise) return;
 
 				cruiseMap.addShip( ship );
-				const departureDate = new Date(cruise.departure);
-				const arrivalDate = new Date(cruise.arrival);
-
-				// Создаем массив дат между отправлением и прибытием
-				const getDatesArray = (start: Date, end: Date): Date[] => {
-					const dates: Date[] = [];
-					const currentDate = new Date(start);
-
-					while (currentDate <= end) {
-						dates.push(new Date(currentDate.setHours(3, 0, 0, 0))); // 00:00 по МСК (UTC+3)
-						currentDate.setDate(currentDate.getDate() + 1);
-					}
-
-					return dates;
-				};
-
-				const datesArray = getDatesArray(departureDate, arrivalDate);
+				const departureDate = ship.navigationStartDate;
+				const arrivalDate = ship.navigationEndDate;
 
 				// Находим контейнер для точек
 				const rangeContainer = document.querySelector('.map-overlay--range-dates');
@@ -163,9 +148,8 @@ export default class MapOverlay extends DOMComponent {
 					const totalDuration = arrivalDate.getTime() - departureDate.getTime();
 
 					// Добавляем новые точки для каждой даты
-					datesArray.forEach((date, index) => {
-						if (index === 0) return; // Пропускаем первую и последнюю даты
-
+					const date = new Date( +departureDate + 86400000 );
+					while (+date < +arrivalDate) {
 						const markerElement = document.createElement('div');
 						markerElement.className = 'rs-marker';
 
@@ -177,14 +161,16 @@ export default class MapOverlay extends DOMComponent {
 						});
 
 						// Вычисляем позицию точки на основе временных меток
-						const timeDifference = date.getTime() - departureDate.getTime();
+						const timeDifference = +date - +departureDate;
 						const progress = (timeDifference / totalDuration) * 100;
 						markerElement.style.left = `${progress}%`;
 						pointElement.style.left = `${progress}%`;
 
 						pointsContainer?.appendChild(markerElement);
 						pointsContainer?.appendChild(pointElement);
-					});
+
+						date.setDate(date.getDate() + 1);
+					}
 				}
 			}, { once: true });
 		}
@@ -884,7 +870,7 @@ class TimelineSlider extends DOMComponent {
 					const point = Math.min(Math.max((clientX - x) / width, 0), 1);
 					domNode.style.setProperty(
 						"--map-overlay--range-dates_point",
-						`${point}`
+						`${point * 100}%`
 					);
 					moveTimeline(point);
 				}
@@ -900,7 +886,7 @@ class TimelineSlider extends DOMComponent {
 				const point = Math.min(Math.max((clientX - x) / width, 0), 1);
 				domNode.style.setProperty(
 					"--map-overlay--range-dates_point",
-					`${point}`
+					`${point * 100}%`
 				);
 				moveTimeline(point);
 			}
@@ -918,7 +904,7 @@ class TimelineSlider extends DOMComponent {
 			point = 1;
 		}
 		const element = this.domNode as HTMLElement;
-		element.style.setProperty("--map-overlay--range-dates_point", `${point}`);
+		element.style.setProperty("--map-overlay--range-dates_point", `${point * 100}%`);
 		const slider = element.getElementsByClassName("rs-container")[0];
 		const valueElement = slider.getElementsByClassName(
 			"rs-tooltip"

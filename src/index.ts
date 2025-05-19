@@ -3,7 +3,6 @@ import OSM from './components/map/osm';
 import CruiseMap from './components/cruise-map';
 import MapOverlay from './components/map-overlay';
 import MapContainer from './components/map-container';
-import './site-globals.css';
 import './index.css';
 
 const text = {

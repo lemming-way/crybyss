@@ -1,9 +1,30 @@
 const
 	path = require('path'),
 	HtmlWebpackPlugin = require('html-webpack-plugin'),
-	MiniCssExtractPlugin = require('mini-css-extract-plugin');
+	MiniCssExtractPlugin = require('mini-css-extract-plugin'),
+	CopyPlugin = require('copy-webpack-plugin');
 
 const isProduction = process.env.NODE_ENV == 'production';
+const buildFilename = isProduction ? 'map.html' : 'index.html';
+
+const plugins = [
+	new HtmlWebpackPlugin({
+		filename: buildFilename,
+		template: './src/index.ejs',
+	}),
+
+	new MiniCssExtractPlugin()
+];
+
+if (!isProduction) {
+	plugins.push( new CopyPlugin({
+		patterns: [
+			{ from: 'src/site-globals.css', to: 'site-globals.css' },
+			{ from: 'src/fonts', to: 'fonts' }
+		]
+	}) )
+}
+
 
 module.exports = {
 
@@ -19,18 +40,9 @@ module.exports = {
 		path: path.resolve(__dirname, 'dist'),
 	},
 
-	devtool: 'source-map',
+	devtool: isProduction ? false : 'source-map',
 
-	plugins: [
-
-		new HtmlWebpackPlugin({
-			filename: 'index.html',
-			template: './src/index.ejs',
-		}),
-
-		new MiniCssExtractPlugin(),
-
-	],
+	plugins,
 
 	module: {
 		rules: [
@@ -59,9 +71,19 @@ module.exports = {
 				test: /\.ejs$/i,
 				use: [
 
-					'html-loader',
+					{
+						loader: 'html-loader',
+						options: {
+							sources: {
+								urlFilter: ( a, v, p ) => {
+									if (/\.css/i.test( v )) return false;
+									else return true;
+								}
+							}
+						}
+					},
 
-					'template-ejs-loader',
+					'template-ejs-loader'
 
 				]
 			},

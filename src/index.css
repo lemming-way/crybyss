@@ -1,5 +1,151 @@
+:root {
+	--height: 58px;
+}
+@media all and (max-width: 1440px) {
+  :root {
+    --height: 58px;
+  }
+}
+@media (max-width: 900px) {
+  :root {
+    --height: 50px;
+  }
+}
+
+main {
+  padding: 0;
+  background-color: unset;
+}
+
+img {
+  image-rendering: -webkit-optimize-contrast !important;
+}
+
 svg {
   transition: none;
+}
+
+.rs-container * {
+  box-sizing: border-box;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+.rs-container {
+  font-family: Arial, Helvetica, sans-serif;
+  height: 45px;
+  position: relative;
+}
+.rs-container .rs-bg,
+.rs-container .rs-pointer,
+.rs-container .rs-selected {
+  background-color: #eee;
+  height: 10px;
+  left: 0;
+  position: absolute;
+  top: 5px;
+  width: 100%;
+  border-radius: 3px;
+}
+.rs-container .rs-pointer,
+.rs-container .rs-selected {
+  background-color: #00b3bc;
+  transition: all 0.2s linear;
+  width: 0;
+}
+.rs-container.disabled .rs-selected {
+  background-color: #ccc;
+  border-color: #bbb;
+}
+.rs-container .rs-pointer {
+  background-color: #fff;
+  cursor: pointer;
+  height: 20px;
+  left: -10px;
+  top: 0;
+  width: 30px;
+}
+.rs-container.disabled .rs-pointer {
+  border-color: #ccc;
+  cursor: default;
+}
+.rs-container .rs-pointer::after,
+.rs-container .rs-pointer::before,
+.rs-container .rs-scale span::before {
+  content: "";
+  position: absolute;
+  width: 1px;
+  height: 9px;
+  background-color: #ddd;
+  left: 12px;
+  top: 5px;
+}
+.rs-container .rs-pointer::after {
+  left: auto;
+  right: 12px;
+}
+.rs-container.sliding .rs-pointer,
+.rs-container.sliding .rs-selected {
+  transition: none;
+}
+.rs-container .rs-scale {
+  left: 0;
+  position: absolute;
+  top: 5px;
+  white-space: nowrap;
+}
+.rs-container .rs-scale span {
+  float: left;
+  position: relative;
+}
+.rs-container .rs-scale span::before {
+  background-color: #ededed;
+  height: 8px;
+  left: 0;
+  top: 10px;
+}
+.rs-container.rs-noscale span::before {
+  display: none;
+}
+.rs-container.rs-noscale span:first-child::before,
+.rs-container.rs-noscale span:last-child::before {
+  display: block;
+}
+.rs-container .rs-scale span:last-child {
+  margin-left: -1px;
+  width: 0;
+}
+.rs-container .rs-scale span ins {
+  color: #333;
+  display: inline-block;
+  font-size: 12px;
+  margin-top: 20px;
+  text-decoration: none;
+}
+.rs-container.disabled .rs-scale span ins {
+  color: #999;
+}
+.rs-tooltip {
+  color: #333;
+  width: auto;
+  min-width: 60px;
+  height: 30px;
+  background: #fff;
+  border: 1px solid #00969b;
+  border-radius: 3px;
+  position: absolute;
+  transform: translate(-50%, -35px);
+  left: 13px;
+  text-align: center;
+  font-size: 13px;
+  padding: 6px 10px 0;
+}
+.rs-container.disabled .rs-tooltip {
+  border-color: #ccc;
+  color: #999;
 }
 
 .filter-overlay {
@@ -68,7 +214,6 @@ svg {
   .symbol {
     border: 1px solid #32739d;
     color: #32739d;
-    /* padding: 0px 5px; */
     width: 17.5px;
     height: 17.5px;
     border-radius: 50%;
@@ -107,8 +252,6 @@ svg {
     height: 11px;
     font-size: 9px;
     line-height: 9px;
-    /* padding: 0px 2px;
-    text-align: center; */
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -117,7 +260,6 @@ svg {
 
 .datepicker-container {
   position: relative;
-  /* width: 400px; */
 }
 
 .datepicker-label {
@@ -152,7 +294,6 @@ svg {
   background: white;
   border: 1px solid #ddd;
   border-radius: 10px;
-  /* box-shadow: 0 0px 4px rgba(0, 0, 0, 0.226); */
   padding: 10px 11px 11px;
   z-index: 1000;
 
@@ -248,7 +389,6 @@ svg {
 
 .range-container {
   position: relative;
-  /* width: 500px; */
   height: 58px;
   display: flex;
   flex-direction: column;
@@ -339,7 +479,6 @@ svg {
   display: flex;
   justify-content: center;
   align-items: center;
-  /* width: 200px; */
   height: 58px;
   border: 1px solid #EEEEEE;
   border-radius: 10px;
@@ -365,7 +504,6 @@ svg {
 @media (max-width: 900px) {
   .filter-box {
     right: 118px;
-    /* padding: 12px; */
   }
 }
 
@@ -380,7 +518,6 @@ svg {
   .datepicker-container,
   .range-container,
   .time-picker-container {
-    /* width: 90vw !important; */
     width: 100%;
     height: 54px;
   }
