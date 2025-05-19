@@ -6,17 +6,17 @@ import {
 
 /// @todo: Конфиг вынести в отдельный файл
 const siteURL = 'https://krubiss.ru';
-const apiURL = 'https://krubiss.ru/api2';
+const apiURL = 'https://krubiss.ru/api/map';
 const apiEntries = {
-	start : '?service=map&method=start',
-	startCruise : '?service=map&method=start&option=cruise',
-	startStops : '?service=map&method=start&option=stops',
-	startSights : '?service=map&method=start&option=sights',
-	stops : '?service=map&method=stops',
-	cruiseSights : '?service=map&method=sights&option=byCruiseId',
-	sightsByIds : '?service=map&method=sights&option=byIds',
-	gateways : '?service=map&method=gateways',
-	points : '?service=map&method=points'
+	start : 'start',
+	startCruise : 'start/cruise',
+	startStops : 'start/stops',
+	startSights : 'start/sights',
+	stops : 'stops',
+	cruiseSights : 'sights/byCruiseId',
+	sightsByIds : 'sights/byIds',
+	gateways : 'gateways',
+	points : 'points'
 };
 
 const brandColors: Record<string, number> = {
@@ -201,7 +201,7 @@ class CruiseData implements Cruise {
 			const stops = data.stops.map( ( stop: any ) => ({
 				arrival: parseDate( stop.arrival ),
 				departure: parseDate( stop.departure ),
-				location: cache.stops[ stop.id ]
+				location: cache.stops[ stop.id ] ?? {}
 			}) );
 			this.stops = Promise.resolve( stops );
 		}
@@ -211,7 +211,7 @@ class CruiseData implements Cruise {
 					const stops = data.stops.map( ( stop: any ) => ({
 						arrival: parseDate( stop.arrival ),
 						departure: parseDate( stop.departure ),
-						location: cache.stops[ stop.id ]
+						location: cache.stops[ stop.id ] ?? {}
 					}) );
 					resolve( stops );
 				};
@@ -223,7 +223,7 @@ class CruiseData implements Cruise {
 			const sights = data.sights.map( ( item: any ) => ({
 				arrival: parseDate( item.arrival ),
 				side: item.side.toLowerCase(),
-				location: cache.sights[ item.id ] as Location
+				location: ( cache.sights[ item.id ] ?? {} ) as Location
 			}) );
 			this._sights = Promise.resolve( sights );
 		}
@@ -248,7 +248,7 @@ class CruiseData implements Cruise {
 			const sights = data.map( ( item: any ) => ({
 				arrival: parseDate( item.arrival ),
 				side: item.side.toLowerCase(),
-				location: cache.sights[ item.id ] as Location
+				location: ( cache.sights[ item.id ] ?? {} ) as Location
 			}) );
 			resolve( sights );
 		} );
@@ -302,7 +302,7 @@ class CruiseData implements Cruise {
 			this._gateways = Promise.resolve(
 				gateways.map( ( item: any ) => ({
 					arrival: item.arrival,
-					location: cache.gateways[ item.gateway ]
+					location: ( cache.gateways[ item.gateway ] ?? {} ) as Location
 				}) )
 			);
 		}
@@ -312,7 +312,7 @@ class CruiseData implements Cruise {
 					resolve(
 						gateways.map( ( item: any ) => ({
 							arrival: item.arrival,
-							location: cache.gateways[ item.gateway ]
+							location: ( cache.gateways[ item.gateway ] ?? {} ) as Location
 						}) )
 					);
 				};
@@ -503,14 +503,26 @@ class APIConnector {
 		this.baseUrl = baseUrl;
 	}
 
-	/// @todo: добавить обработку ошибок
 	async send(url: string, data: any = {}): Promise<any> {
-		const response = await fetch(`${this.baseUrl}/${url}`, {
-			method: 'POST',
-			body: JSON.stringify(data),
-			headers: {'content-type': 'application/json'},
-		});
-		return await response.json();
+		let sleepTime = 2000;
+		for (let attempt = 0; attempt < 3; attempt++) {
+			try {
+				const response = await fetch(`${this.baseUrl}/${url}`, {
+					method: 'POST',
+					body: JSON.stringify(data),
+					headers: {'content-type': 'application/json'},
+				});
+				if (!response.ok) throw new Error( 'Data fetching error.' );
+				const result = await response.json();
+				if (result?.errors) throw new Error( result.errors.join( '; ' ) );
+				return result;
+			}
+			catch (e) {
+				await new Promise( resolve => setTimeout( resolve, sleepTime ) );
+				sleepTime *= 2;
+			}
+		}
+		return null;
 	}
 
 }
@@ -548,8 +560,8 @@ function fetchCruiseTracks( id: string ) {
 			}
 			const ids = Object.keys( resolvers );
 			const data = await connector.send( apiEntries.points, { id: ids, progress: 1 } );
-			for (const id of Object.keys( data )) {
-				resolvers[ id ]( data[ id ] );
+			for (const id of ids) {
+				resolvers[ id ]( data?.[ id ] ?? [] );
 			}
 			trackFetchingTasks--;
 			if (!trackFetchingTasks && !progressiveFetchingTasks) doFetchTracks();
@@ -607,7 +619,7 @@ function doFetchTracks() {
 			const item = cruiseTracksToFetchQueue.shift();
 			const fetching =
 				connector.send( apiEntries.points, { id: item.id, progress: item.stage } )
-				.then( data => data[ item.id ] );
+				.then( data => data?.[ item.id ] ?? [] );
 			fetching.then( () => {
 				progressiveFetchingTasks--;
 				if (!!cruiseTracksToFetchQueue.length) doFetchTracks();
@@ -633,8 +645,8 @@ function fetchCruiseSights( id: string ) {
 			const resolvers = cruiseSightsToFetch;
 			cruiseSightsToFetch = {};
 			const data = await connector.send( apiEntries.cruiseSights, { id: ids } );
-			for (const id of Object.keys( data )) {
-				resolvers[ id ]( data[ id ] );
+			for (const id of ids) {
+				resolvers[ id ]( data?.[ id ] ?? [] );
 			}
 		}
 	}, 10 );
@@ -721,7 +733,7 @@ async function fetchGateways() {
 }
 
 async function fetchStartCruises() {
-	const { cruises, ships, companies } = await connector.send( apiEntries.start );
+	const { cruises, ships, companies } = ( await connector.send( apiEntries.start ) ) ?? {};
 	for (const company of Object.values( companies ?? {} ) as any) {
 		if (dataIsSane( 'company', company )) {
 			cache.companies.add( new CompanyData( company ) );
@@ -745,7 +757,7 @@ async function fetchStartCruises() {
 }
 
 async function fetchStartSingleCruise( cruiseId: string ) {
-	const { ship, company, 'stops-data': stops, 'sights-data': sights, gateways, ...cruise } = await connector.send( apiEntries.startCruise, { id: cruiseId } );
+	const { ship, company, 'stops-data': stops, 'sights-data': sights, gateways, ...cruise } = ( await connector.send( apiEntries.startCruise, { id: cruiseId } ) ) ?? {};
 
 	if (dataIsSane( 'company', company )) {
 		cache.companies.add( new CompanyData( company ) );

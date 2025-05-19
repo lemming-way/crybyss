@@ -970,7 +970,7 @@ class CruiseAssets {
 			if (this._stopsVisible) {
 				for (const stop of stops) {
 					const { id, lat, lng } = stop.location;
-					if (!this.stops[ id ]) {
+					if (id && !this.stops[ id ]) {
 						this.stops[ id ] = this.map.attachLocationMarker(
 							id, LocationType.REGULAR, '', lat, lng,
 							() => CruiseAssets.locationPopup( stop.location, this.map ),
@@ -995,7 +995,7 @@ class CruiseAssets {
 			if (this._sightsVisible) {
 				for (const sight of sights) {
 					const { id, category, lat, lng } = sight.location;
-					if (!this.sights[ id ]) {
+					if (id && !this.sights[ id ]) {
 						this.sights[ id ] = this.map.attachLocationMarker(
 							id, LocationType.SHOWPLACE, category, lat, lng,
 							() => CruiseAssets.locationPopup( sight.location, this.map ),
@@ -1073,7 +1073,7 @@ class CruiseAssets {
 			if (this._gatewaysVisible) {
 				for (const gateway of gateways) {
 					const { id, lat, lng } = gateway.location;
-					if (!this.gateways[ id ]) {
+					if (id && !this.gateways[ id ]) {
 						this.gateways[ id ] = this.map.attachLocationMarker(
 							id, LocationType.GATEWAY, '', lat, lng,
 							() => CruiseAssets.gatewayPopup( gateway.location, this.map ),
