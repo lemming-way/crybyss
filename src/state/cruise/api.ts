@@ -327,7 +327,7 @@ class CruiseData implements Cruise {
 			const data = await fetchCruiseTracks( this.id );
 			const points = this._parseRoute( data );
 			resolve( new CruiseRoute( points ) );
-			this.routeReadyStage = 4;
+			this.routeReadyStage = 1;
 		} );
 		return this._route;
 	}
@@ -547,7 +547,7 @@ function fetchCruiseTracks( id: string ) {
 				cruiseTracksToFetch = {};
 			}
 			const ids = Object.keys( resolvers );
-			const data = await connector.send( apiEntries.points, { id: ids, progress: 0 } );
+			const data = await connector.send( apiEntries.points, { id: ids, progress: 1 } );
 			for (const id of Object.keys( data )) {
 				resolvers[ id ]( data[ id ] );
 			}
