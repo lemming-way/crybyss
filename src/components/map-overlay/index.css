@@ -3,11 +3,6 @@
   height: 24px;
 }
 
-.map-overlay--controls {
-  display: flex;
-  gap: 20px;
-}
-
 .map-overlay--col {
   width: 25%;
 }
@@ -29,39 +24,6 @@
   font-style: normal;
   font-weight: 600;
   line-height: 19.2px;
-}
-
-.map-overlay--control [type="text"],
-.map-overlay--control [type="time"] {
-  border-radius: 10px;
-  border: 1px solid #eee;
-  background: #fff;
-  height: var(--height);
-  line-height: var(--height);
-  padding: 0 50px 0 20px;
-  color: rgba(0, 0, 0, 0.7);
-  font-size: 18px;
-  font-style: normal;
-  font-weight: 700;
-  width: 100%;
-}
-
-.map-overlay--control [type="time"] {
-  padding: 0 20px 0 20px;
-  width: 100%;
-  text-align: center;
-}
-
-.map-overlay--control-box {
-  position: relative;
-}
-
-.map-overlay--control-box svg {
-  position: absolute;
-  top: 50%;
-  right: 15px;
-  transform: translateY(-50%);
-  cursor: pointer;
 }
 
 body .rs-container .rs-pointer {
@@ -129,9 +91,8 @@ body .rs-container .rs-bg {
   }
 }
 
-.map-overlay--search-box [type="text"] {
+.map-overlay--search-box input:not([type]),.map-overlay--search-box [type="text"] {
   border-radius: 10px;
-  /* border: 1px solid #eee; */
   background: #fff;
   height: var(--height);
   line-height: var(--height);
@@ -142,7 +103,7 @@ body .rs-container .rs-bg {
 }
 
 @media (max-width: 800px) {
-  .map-overlay--search-box [type="text"] {
+  .map-overlay--search-box input:not([type]), .map-overlay--search-box [type="text"] {
     width: 296px;
     font-size: 12px;
     height: calc(var(--height) - 10px);
@@ -150,7 +111,7 @@ body .rs-container .rs-bg {
 }
 
 @media (max-width: 639px) {
-  .map-overlay--search-box [type="text"] {
+  .map-overlay--search-box input:not([type]), .map-overlay--search-box [type="text"] {
     width: 100%;
   }
 }
@@ -660,8 +621,6 @@ body .map-overlay--range-dates .rs-container:before {
 }
 
 body .map-overlay--range-dates .rs-container .rs-pointer {
-  /* border: none;
-  border-radius: none; */
   width: 40px;
   height: 40px;
   display: flex;
@@ -669,28 +628,6 @@ body .map-overlay--range-dates .rs-container .rs-pointer {
   justify-content: center;
   z-index: 33;
 }
-
-/*
-@media all and (max-width: 767px) {
-  .map-overlay--search-box [type="text"] {
-    min-width: 300px;
-  }
-
-  .map-overlay--ship {
-    left: 340px;
-  }
-
-  .map-overlay--anchor {
-    left: calc(340px + var(--height) + 15px);
-  }
-
-  .map-overlay--place {
-    left: calc(340px + 2 * ( var(--height) + 15px ));
-  }
-}
-*/
-
-/* ... */
 
 .map-overlay {
   position: relative;
@@ -738,8 +675,6 @@ body .map-overlay--range-dates .rs-container .rs-pointer {
   border-radius: 10px;
 
 }
-
-/* svg */
 
 .map-overlay svg {
   transition: none;
@@ -933,7 +868,6 @@ body .map-overlay--range-dates .rs-container .rs-pointer {
 .map-overlay--zoom-block-button-reset {
   margin-top: 18px;
   border: 1px solid #32739D;
-  /* display: none; */
 }
 
 @media (max-width: 800px) {

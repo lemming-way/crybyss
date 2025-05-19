@@ -182,6 +182,7 @@ class CruiseData implements Cruise {
 	declare _loadHighPriority?: boolean;
 
 	constructor( data: any ) {
+if (process.env.NODE_ENV === 'production') {
 		Object.assign( this, {
 			id: data.id,
 			name: data.name,
@@ -189,13 +190,26 @@ class CruiseData implements Cruise {
 			arrival: parseDate( data.arrival ),
 			departureLocationName: data.departureLocationName,
 			arrivalLocationName: data.arrivalLocationName,
-			//~ url: data.url,
-			// Это для тестирования. После переноса приложения на основной сайт проверку url можно будет убрать
+			url: data.url,
+			ship: cache.ship( data.shipId ),
+			company: cache.ship( data.shipId )?.company,
+			routeReadyStage: 0
+		} );
+}
+else {
+		Object.assign( this, {
+			id: data.id,
+			name: data.name,
+			departure: parseDate( data.departure ),
+			arrival: parseDate( data.arrival ),
+			departureLocationName: data.departureLocationName,
+			arrivalLocationName: data.arrivalLocationName,
 			url: data.url ? ( /^https?:\/\//.test( data.url ) ? '' : siteURL ) + data.url : '',
 			ship: cache.ship( data.shipId ),
 			company: cache.ship( data.shipId )?.company,
 			routeReadyStage: 0
 		} );
+}
 
 		if (!!cache.stops) {
 			const stops = data.stops.map( ( stop: any ) => ({
@@ -653,6 +667,19 @@ async function fetchSights( ids: string[] ) {
 		newIds.forEach( id => { ( cache.sights[ id ] as any ) = dataPromise; } );
 		const data = await dataPromise;
 		( data || [] ).forEach( ( item: any ) => {
+if (process.env.NODE_ENV === 'production') {
+			cache.sights[ item.id ] = {
+				id: item.id,
+				type: LocationType.SHOWPLACE,
+				lat: item.lat,
+				lng: item.lng,
+				name: item.name,
+				category: item.category,
+				image: item.image ?? '',
+				link: item.url ?? '',
+			};
+}
+else {
 			cache.sights[ item.id ] = {
 				id: item.id,
 				type: LocationType.SHOWPLACE,
@@ -661,13 +688,10 @@ async function fetchSights( ids: string[] ) {
 				name: item.name,
 				category: item.category,
 				//~ description: item.description,
-				//~ image: item.image,
-				// Это для тестирования. После переноса приложения на основной сайт проверку url можно будет убрать
 				image: item.image ? ( /^https?:\/\//.test( item.image ) ? '' : siteURL ) + item.image : '',
-				//~ link: item.url,
-				// Это для тестирования. После переноса приложения на основной сайт проверку url можно будет убрать
 				link: item.url ? ( /^https?:\/\//.test( item.url ) ? '' : siteURL ) + item.url : ''
 			};
+}
 		} );
 	}
 
@@ -683,6 +707,18 @@ async function fetchStops() {
 	const data = await connector.send( apiEntries.stops );
 	cache.stops = ( data || [] ).reduce(
 		( ret: Record<string, Location>, item: any ) => {
+if (process.env.NODE_ENV === 'production') {
+			ret[ item.id ] = {
+				id: item.id,
+				type: LocationType.REGULAR,
+				lat: item.lat,
+				lng: item.lng,
+				name: item.name,
+				image: item.image ?? '',
+				link: item.url ?? '',
+			};
+}
+else {
 			ret[ item.id ] = {
 				id: item.id,
 				type: LocationType.REGULAR,
@@ -690,13 +726,10 @@ async function fetchStops() {
 				lng: item.lng,
 				name: item.name,
 				//~ description: item.description,
-				//~ image: item.image,
-				// Это для тестирования. После переноса приложения на основной сайт проверку url можно будет убрать
 				image: item.image ? ( /^https?:\/\//.test( item.image ) ? '' : siteURL ) + item.image : '',
-				//~ link: item.url,
-				// Это для тестирования. После переноса приложения на основной сайт проверку url можно будет убрать
 				link: item.url ? ( /^https?:\/\//.test( item.url ) ? '' : siteURL ) + item.url : ''
 			};
+}
 			return ret;
 		}, {}
 	) as Record<string, Location>;
@@ -757,6 +790,18 @@ async function fetchStartSingleCruise( cruiseId: string ) {
 	if (dataIsSane( 'cruise', cruise )) {
 		cache.stops = ( stops || [] ).reduce(
 			( ret: Record<string, Location>, item: any ) => {
+if (process.env.NODE_ENV === 'production') {
+				ret[ item.id ] = {
+					id: item.id,
+					type: LocationType.REGULAR,
+					lat: item.lat,
+					lng: item.lng,
+					name: item.name,
+					image: item.image ?? '',
+					link: item.url ?? '',
+				};
+}
+else {
 				ret[ item.id ] = {
 					id: item.id,
 					type: LocationType.REGULAR,
@@ -764,18 +809,28 @@ async function fetchStartSingleCruise( cruiseId: string ) {
 					lng: item.lng,
 					name: item.name,
 					//~ description: item.description,
-					//~ image: item.image,
-					// Это для тестирования. После переноса приложения на основной сайт проверку url можно будет убрать
 					image: item.image ? ( /^https?:\/\//.test( item.image ) ? '' : siteURL ) + item.image : '',
-					//~ link: item.url,
-					// Это для тестирования. После переноса приложения на основной сайт проверку url можно будет убрать
 					link: item.url ? ( /^https?:\/\//.test( item.url ) ? '' : siteURL ) + item.url : ''
 				};
+}
 				return ret;
 			}, {}
 		) as Record<string, Location>;
 
 		( sights || [] ).forEach( ( item: any ) => {
+if (process.env.NODE_ENV === 'production') {
+			cache.sights[ item.id ] = {
+				id: item.id,
+				type: LocationType.SHOWPLACE,
+				lat: item.lat,
+				lng: item.lng,
+				name: item.name,
+				category: item.category,
+				image: item.image ?? '',
+				link: item.url ?? '',
+			};
+}
+else {
 			cache.sights[ item.id ] = {
 				id: item.id,
 				type: LocationType.SHOWPLACE,
@@ -784,13 +839,10 @@ async function fetchStartSingleCruise( cruiseId: string ) {
 				name: item.name,
 				category: item.category,
 				//~ description: item.description,
-				//~ image: item.image,
-				// Это для тестирования. После переноса приложения на основной сайт проверку url можно будет убрать
 				image: item.image ? ( /^https?:\/\//.test( item.image ) ? '' : siteURL ) + item.image : '',
-				//~ link: item.url,
-				// Это для тестирования. После переноса приложения на основной сайт проверку url можно будет убрать
 				link: item.url ? ( /^https?:\/\//.test( item.url ) ? '' : siteURL ) + item.url : ''
 			};
+}
 		} );
 
 		cache.gateways = ( gateways || [] ).reduce(
@@ -826,6 +878,18 @@ async function fetchStartLocations( type: string, id?: string | string[] ) {
 		const data = await connector.send( url, { id } );
 		result = ( data || [] ).reduce(
 			( ret: Record<string, Location>, item: any ) => {
+if (process.env.NODE_ENV === 'production') {
+				ret[ item.id ] = {
+					id: item.id,
+					type: type === 'stops' ? LocationType.REGULAR : LocationType.SHOWPLACE,
+					lat: item.lat,
+					lng: item.lng,
+					name: item.name,
+					image: item.image ?? '',
+					link: item.url ?? '',
+				};
+}
+else {
 				ret[ item.id ] = {
 					id: item.id,
 					type: type === 'stops' ? LocationType.REGULAR : LocationType.SHOWPLACE,
@@ -833,13 +897,10 @@ async function fetchStartLocations( type: string, id?: string | string[] ) {
 					lng: item.lng,
 					name: item.name,
 					//~ description: item.description,
-					//~ image: item.image,
-					// Это для тестирования. После переноса приложения на основной сайт проверку url можно будет убрать
 					image: item.image ? ( /^https?:\/\//.test( item.image ) ? '' : siteURL ) + item.image : '',
-					//~ link: item.url,
-					// Это для тестирования. После переноса приложения на основной сайт проверку url можно будет убрать
 					link: item.url ? ( /^https?:\/\//.test( item.url ) ? '' : siteURL ) + item.url : ''
 				};
+}
 				if (type === 'sights') {
 					ret[ item.id ].category = item.category;
 				}
@@ -1010,9 +1071,5 @@ function parseDate(dateString: string): Date {
 		return new Date(+year, +month - 1, +day, +hour, +minute, +second);
 	}
 
-	//~ match = dateString
-		//~ .match(/(\d{4})-(\d{2})-(\d{2})\s(\d{2}):(\d{2}):(\d{2})?/);
-	//~ const [, year, month, day, hour, minute, second = '00'] = match;
-	//~ return new Date(+year, +month - 1, +day, +hour, +minute, +second);
 	return new Date( dateString );
 }
