@@ -6,6 +6,7 @@
     "build": "webpack --mode=production --node-env=production",
     "build:dev": "webpack --mode=development --node-env=development",
     "build:prod": "webpack --mode=production --node-env=production",
+    "build:doc": "rimraf docs && tsc --outDir docs/tmp -t es2020 --moduleResolution bundler --moduleSuffixes ,.d,/index --skipLibCheck --allowJS custom.d.ts src/index.ts && jsdoc -c jsdoc.conf.json docs/tmp && rimraf docs/tmp",
     "watch": "webpack --watch"
   },
   "dependencies": {
@@ -27,6 +28,10 @@
     "webpack": "^5.98.0"
   },
   "devDependencies": {
+    "jsdoc": "^4.0.4",
+    "jsdoc-export-default-interop": "^0.3.1",
+    "jsdoc-summarize2": "^0.1.4",
+    "rimraf": "^6.0.1",
     "webpack-cli": "^6.0.1",
     "webpack-dev-server": "^5.2.0"
   }

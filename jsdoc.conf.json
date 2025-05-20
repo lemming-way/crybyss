@@ -1,0 +1,26 @@
+{
+    "plugins": [
+        "jsdoc-export-default-interop",
+        "jsdoc-summarize2"
+    ],
+    "recurseDepth": 10,
+    "source": {
+        "includePattern": ".+\\.js$",
+        "excludePattern": "(^|\\/|\\\\)_|yandex.js"
+    },
+    "sourceType": "module",
+    "tags": {
+        "allowUnknownTags": true,
+        "dictionaries": ["jsdoc","closure"]
+    },
+    "templates": {
+        "cleverLinks": false,
+        "monospaceLinks": false
+    },
+    "opts": {
+        "encoding": "utf8",
+        "destination": "./docs",
+        "recurse": true,
+        "readme": "./README.md"
+    }
+}

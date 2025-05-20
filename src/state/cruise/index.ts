@@ -1,4 +1,8 @@
-/** Интерфейсы для получения данных о круизах по API */
+/**
+ * @file Интерфейсы для получения данных о круизах по API.
+ * @module state
+ * @version 1.0.0
+ */
 
 export interface CruiseAPI {
 	navigationStartDate: Date;
@@ -37,6 +41,10 @@ export interface Cruise {
 	setHighPriorityLoading: ( highPriority: boolean ) => void;
 }
 
+/**
+ * Цвет компании по умолчанию, если другой не задан
+ * @type {number}
+ */
 export const defaultCompanyColor = 0x7F7F7F;
 
 export interface Company {
@@ -87,20 +95,67 @@ export interface TrackPoint {
 	angle?: number;
 }
 
+/**
+ * @typedef {Object} Location
+ * @property {string} id - ID объекта.
+ * @property {LocationType} type - Тип объекта.
+ * @property {number} lat - Географическая широта.
+ * @property {number} lng - Географическая долгота.
+ * @property {string} name - Название объекта.
+ * @property {string} [category] - Категория достопримечательностей.
+ * @property {string} [image] - URL изображения объекта.
+ * @property {string} [link] - URL страницы объекта.
+ * @description Объект данных стоянки, достопримечательности, шлюза.
+ */
+
+/**
+ * @typedef {Object} TrackLocation
+ * @property {Date} arrival - Дата и время прибытия на место.
+ * @property {Date} [departure] - Дата и время отправления со стоянки.
+ * @property {("left"|"right")} [side] - Сторона борта.
+ * @property {Location} location - Прочие данные места.
+ * @description Информация о прохождении места на карте теплоходом.
+ */
+
+/**
+ * @typedef {Object} TrackPoint
+ * @property {number} lat - Географическая широта.
+ * @property {number} lng - Географическая долгота.
+ * @property {Date} arrival - Дата и время прибытия на точку.
+ * @property {boolean} isStop - Точка является стоянкой.
+ * @property {("left"|"right")} [side] - Сторона борта.
+ * @property {number} [angle] - Угол направления движения.
+ * @description Точка маршрута.
+ */
+
+/**
+ * Типы мест на карте.
+ * @readonly
+ * @enum {number}
+ */
 export enum LocationType {
 	REGULAR,
 	SHOWPLACE,
 	GATEWAY
 }
 
+/** Данные маршрута круиза */
 export class CruiseRoute {
 
 	declare points: TrackPoint[];
 
+	/**
+	 * @param {TrackPoint[]} points
+	 */
 	constructor(points: TrackPoint[]) {
 		this.points = points;
 	}
 
+	/**
+	 * Определить положение теплохода на маршруте в заданный момент времени.
+	 * @param {Date} datetime - Дата и время на карте.
+	 * @returns {TrackPoint} Положение теплохода.
+	 */
 	positionAt( datetime: Date ): TrackPoint {
 		if (!this.points.length) {
 			return { arrival: datetime, lat: 0, lng: 0, isStop: true };

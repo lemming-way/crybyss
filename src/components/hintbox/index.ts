@@ -1,7 +1,17 @@
+/**
+ * @file Маркер с вопросительным знаком для всплывающей подсказки.
+ * @module components/hintbox
+ * @version 1.0.0
+ */
+
 import { DOMComponent } from "../dom";
 import './index.css';
 
+/**
+ * При нажатии на кнопку переключается класс "active".
+ */
 class ToggleButton extends DOMComponent {
+	/** @param {Element} domNode - DOM элемент кнопки */
 	constructor(domNode: Element) {
 		super(domNode);
 		domNode.addEventListener("click", event => {

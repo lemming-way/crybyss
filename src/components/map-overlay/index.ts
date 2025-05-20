@@ -1,3 +1,9 @@
+/**
+ * @file Элементы управления для карты.
+ * @module components/map-overlay
+ * @version 1.0.0
+ */
+
 import { throttle, debounce } from "throttle-debounce";
 import { TypedEventTarget } from "typescript-event-target";
 import { CruiseAPI, Cruise, Ship, Company } from "../../state/cruise";
@@ -7,13 +13,25 @@ import CruiseMap from "../cruise-map";
 import '../hintbox';
 import "./index.css";
 
-export default class MapOverlay extends DOMComponent {
+/**
+ * Слой для размещения элементов управления картой.
+ */
+class MapOverlay extends DOMComponent {
+
 	declare bounds: [number, number, number, number];
 
 	events: TypedEventTarget<{
 		resize: Event;
 	}> = new TypedEventTarget();
 
+	/**
+	 * Создаёт объект MapOverlay.
+	 * @param {Element} domNode - DOM элемент слоя.
+	 * @param {CruiseMap} cruiseMap - Объект управления картой.
+	 * @param {CruiseAPI} api - Объект для получения данных с сервера.
+	 * @description Настраивает элементы управления, наложенные на карту. Сами элементы создаются
+	 * отдельно в шаблоне HTML.
+	 */
 	constructor(domNode: Element, cruiseMap: CruiseMap, api: CruiseAPI) {
 		super(domNode);
 		for (const [className, id, layer] of [
@@ -201,10 +219,20 @@ export default class MapOverlay extends DOMComponent {
 	}
 }
 
+export default MapOverlay;
+
 // Недоделано: чекбоксы создаются костыльно (?)
+/**
+ * Элемент поиска круизных компаний и теплоходов.
+ */
 class SearchBox extends DOMComponent {
 	declare private cruiseMap: CruiseMap;
 
+	/**
+	 * @param {Element} domNode - DOM элемент панели поиска.
+	 * @param {CruiseMap} cruiseMap - Объект управления картой.
+	 * @param {CruiseAPI} api - Объект для получения данных с сервера.
+	 */
 	constructor(domNode: Element, cruiseMap: CruiseMap, api: CruiseAPI) {
 		super(domNode);
 		this.cruiseMap = cruiseMap;
@@ -405,6 +433,11 @@ class SearchBox extends DOMComponent {
 		// мобильный датапикер конец
 	}
 
+	/**
+	 * Создаёт чекбокс и метку круизной компании.
+	 * @param {Company} company - Объект данных круизной компании (см. {@link module:state/api api}).
+	 * @returns {Element}
+	 */
 	private createCompanyElements(company: Company): Element[] {
 		const {id, name, color} = company;
 		const elementId = `map-overlay--search-company_${id}`;
@@ -453,6 +486,11 @@ class SearchBox extends DOMComponent {
 		return [input, label];
 	}
 
+	/**
+	 * Создаёт чекбокс и метку теплохода.
+	 * @param {Ship} ship - Объект данных теплохода (см. {@link module:state/api api}).
+	 * @returns {Element}
+	 */
 	private createShipElements(ship: Ship): Element[] {
 		const {id, name} = ship;
 		const {color} = ship.company;
@@ -482,6 +520,11 @@ class SearchBox extends DOMComponent {
 		return [input, label];
 	}
 
+	/**
+	 * Создаёт собственно чекбокс.
+	 * @param {string} id - ID чекбокса.
+	 * @returns {HTMLElement[]}
+	 */
 	private createCheckboxElements(id: string): [
 		HTMLInputElement, HTMLLabelElement
 	] {
@@ -497,6 +540,14 @@ class SearchBox extends DOMComponent {
 		return [input, label];
 	}
 
+	/**
+	 * Добавить или удалить теплоход с карты.
+	 * @param {HTMLInputElement} checkbox - чекбокс.
+	 * @param {Ship} ship - Объект данных теплохода (см. {@link module:state/api api}).
+	 * @returns {void}
+	 * @description Добавляет теплоход на карту при отмеченном чекбоксе и удаляет его с карты при
+	 * сброшенном чекбоксе.
+	 */
 	private handleShipCheckbox(checkbox: HTMLInputElement, ship: Ship) {
 		if (checkbox.checked) {
 			this.cruiseMap.addShip(ship);
@@ -506,6 +557,7 @@ class SearchBox extends DOMComponent {
 	}
 }
 
+/** Элемент - переключатель */
 class ToggleButton extends DOMComponent {
 	constructor(domNode: Element) {
 		super(domNode);
@@ -515,7 +567,16 @@ class ToggleButton extends DOMComponent {
 	}
 }
 
+/** Панель выбора даты и времени для карты */
 class DateFilter {
+	/**
+	 * @param {Element} dateInput - Инпут для даты.
+	 * @param {Element} timeSlider - Бегунок установки времени суток.
+	 * @param {Element} timeInput - Инпут для ввода времени.
+	 * @param {TimelineSlider} shipSlider - Большой слайдер даты/времени внизу карты.
+	 * @param {CruiseMap} cruiseMap - Объект управления картой.
+	 * @param {CruiseAPI} api - Объект для получения данных с сервера.
+	 */
 	constructor(
 		dateInput: Element,
 		timeSlider: Element,
@@ -765,7 +826,17 @@ class DateFilter {
 	}
 }
 
+/**
+ * Кнопки переключения видимости слоёв.
+ */
 class LayerVisibilityButton extends DOMComponent {
+	/**
+	 * @param {Element} domNode - Элемент кнопки.
+	 * @param {HTMLInputElement} checkbox - Элемент, хранящий состояние переключателя.
+	 * @param {VisibilityControl} layer - Объект слоя.
+	 * @description В ранних вариантах карты при малом размере экрана слои переключались чекбоксами.
+	 * Поэтому состояние хранится в чекбоксе, а не в переменной.
+	 */
 	constructor(
 		domNode: Element,
 		checkbox: HTMLInputElement,
@@ -784,7 +855,16 @@ class LayerVisibilityButton extends DOMComponent {
 	}
 }
 
+/**
+ * Чекбоксы переключения видимости слоёв.
+ */
 class LayerVisibilityCheckbox extends DOMComponent {
+	/**
+	 * @param {HTMLInputElement} domNode - Элемент, хранящий состояние переключателя.
+	 * @param {VisibilityControl} layer - Объект слоя.
+	 * @description В ранних вариантах карты при малом размере экрана слои переключались чекбоксами.
+	 * Поэтому состояние хранится в чекбоксе, а не в переменной.
+	 */
 	constructor(domNode: HTMLInputElement, layer: VisibilityControl) {
 		super(domNode);
 		const onChange = () => {
@@ -796,6 +876,7 @@ class LayerVisibilityCheckbox extends DOMComponent {
 	}
 }
 
+/** Большой слайдер даты/времени внизу карты */
 class TimelineSlider extends DOMComponent {
 	declare private cruiseMap: CruiseMap;
 
@@ -805,6 +886,10 @@ class TimelineSlider extends DOMComponent {
 		return this._timelineRange;
 	}
 
+	/**
+	 * @param {HTMLElement} domNode - DOM элемент слайдера.
+	 * @param {CruiseMap} cruiseMap - Объект управления картой.
+	 */
 	constructor(domNode: HTMLElement, cruiseMap: CruiseMap) {
 		super(domNode);
 
@@ -893,6 +978,11 @@ class TimelineSlider extends DOMComponent {
 		});
 	}
 
+	/**
+	 * Переместить бегунок в позицию заданного момента времени.
+	 * @param {Date} value - установленный момент времени на карте.
+	 * @returns {void}
+	 */
 	public setSlider(value: Date) {
 		const [from, to] = this._timelineRange;
 		const timeRange = +to - +from;
@@ -912,6 +1002,12 @@ class TimelineSlider extends DOMComponent {
 		valueElement.innerText = TimelineSlider.formatDate(value);
 	}
 
+	/**
+	 * Форматирует дату в формате ДД.ММ.ГГ для меток на слайдере.
+	 * @param {Date} value - значение даты и времени.
+	 * @param {boolean} [isYear=false] - Включить год в дату.
+	 * @returns {string}
+	 */
 	private static formatDate(value: Date, isYear: boolean = false): string {
 		return value.toLocaleDateString(undefined, {
 			day: "2-digit",
@@ -921,6 +1017,9 @@ class TimelineSlider extends DOMComponent {
 	}
 }
 
+/**
+ * Календарь для выбора даты
+ */
 class DatePicker extends DOMComponent {
 	declare input: HTMLInputElement;
 	declare calendar: HTMLDivElement;
@@ -931,6 +1030,9 @@ class DatePicker extends DOMComponent {
 	declare nextMonthBtn: HTMLButtonElement;
 	declare selectedDate: Date;
 
+	/**
+	 * @param {HTMLDivElement} domNode - панель календаря.
+	 */
 	constructor( domNode: HTMLDivElement ) {
 		super( domNode );
 		this.input = document.getElementById("datepicker-input") as HTMLInputElement;
@@ -1018,6 +1120,10 @@ class DatePicker extends DOMComponent {
 		});
 	}
 
+	/**
+	 * Обновить дату на календаре.
+	 * @returns {void}
+	 */
 	updateCalendar() {
 		this.calendarBody.innerHTML = "";
 		const year = this.selectedDate.getFullYear();

@@ -1,3 +1,8 @@
+/**
+ * @file Главный скрипт карты.
+ * @module main
+ * @version 1.0.0
+ */
 import initAPI from './state/cruise/api';
 import OSM from './components/map/osm';
 import CruiseMap from './components/cruise-map';
@@ -5,12 +10,15 @@ import MapOverlay from './components/map-overlay';
 import MapContainer from './components/map-container';
 import './index.css';
 
+// Тексты для описаний стоянок и мест
 const text = {
 	GO_TO_TRACKSTOP: 'Перейти на стоянку',
 	GO_TO_PLACE: 'Перейти на место',
 };
 
+// Режим карты: все круизы, один круиз, стоянки/места
 let mapMode;
+// ID загружаемого круиза, стоянки, места
 let entityId;
 const url = new URL( location.toString() );
 if (url.searchParams.has('cruise')) {

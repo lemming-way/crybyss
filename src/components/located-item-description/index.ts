@@ -1,7 +1,18 @@
+/**
+ * @file Информационные объекты.
+ * @module components/located-item-description
+ * @version 1.0.0
+ * @description Набор классов для создания всплывающих окон с информацией о местах на карте.
+ * @see module:components/location-info
+ */
+
 import {DOMComponent} from '../dom';
 import LocationInfo from '../location-info';
 import './index.css';
 
+/**
+ * Корневой контейнер для элементов описания.
+ */
 export default class LocatedItemDescription extends DOMComponent {
 
 	static create(
@@ -20,10 +31,16 @@ export default class LocatedItemDescription extends DOMComponent {
 
 }
 
+/**
+ * Базовый класс для дочерних элементов.
+ */
 abstract class LocatedItemDescriptionChild<
 	TElement extends Element = Element
 > extends DOMComponent<TElement> {}
 
+/**
+ * Контейнер для группировки элементов.
+ */
 export class LocatedItemDescriptionGroup extends LocatedItemDescriptionChild {
 
 	static create(
@@ -46,6 +63,9 @@ export class LocatedItemDescriptionGroup extends LocatedItemDescriptionChild {
 
 }
 
+/**
+ * Контейнер для элементов, расположенных в ряд по горизонтали.
+ */
 export class LocatedItemDescriptionRow extends LocatedItemDescriptionChild {
 
 	static create(
@@ -70,6 +90,9 @@ export class LocatedItemDescriptionRow extends LocatedItemDescriptionChild {
 
 }
 
+/**
+ * Тектовый элемент.
+ */
 export class LocatedItemDescriptionText extends LocatedItemDescriptionChild {
 
 	static create(text: string, classNames: string[] = [], {
@@ -89,6 +112,9 @@ export class LocatedItemDescriptionText extends LocatedItemDescriptionChild {
 
 }
 
+/**
+ * Текстовый элемент с диапазоном чисел или дат.
+ */
 export class LocatedItemDescriptionRange extends LocatedItemDescriptionChild {
 
 	static create(from: string, to: string, className: string = 'located-item-description__range'): LocatedItemDescriptionRange {
@@ -105,6 +131,9 @@ export class LocatedItemDescriptionRange extends LocatedItemDescriptionChild {
 
 }
 
+/**
+ * Интерактивный элемент.
+ */
 export class LocatedItemDescriptionButton extends LocatedItemDescriptionChild {
 
 	static create(
@@ -120,6 +149,9 @@ export class LocatedItemDescriptionButton extends LocatedItemDescriptionChild {
 
 }
 
+/**
+ * Изображение.
+ */
 export class LocatedItemDescriptionImage extends LocatedItemDescriptionChild<
 	HTMLImageElement
 > {
@@ -145,6 +177,9 @@ export class LocatedItemDescriptionImage extends LocatedItemDescriptionChild<
 
 }
 
+/**
+ * Иконка в формате SVG.
+ */
 export class LocatedItemDescriptionIcon extends LocatedItemDescriptionChild {
 
 	static create(svg: SVGElement): LocatedItemDescriptionIcon {
@@ -154,6 +189,9 @@ export class LocatedItemDescriptionIcon extends LocatedItemDescriptionChild {
 
 }
 
+/**
+ * Координаты объекта.
+ */
 export class LocatedItemDescriptionLocation
 	extends LocatedItemDescriptionChild {
 
@@ -166,6 +204,11 @@ export class LocatedItemDescriptionLocation
 
 }
 
+/**
+ * Расстояние между элементами описания.
+ * @readonly
+ * @enum {number}
+ */
 export enum LocatedItemDescriptionGap {
 	SMALL,
 	MEDIUM,

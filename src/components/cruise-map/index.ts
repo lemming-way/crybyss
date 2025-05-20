@@ -1,5 +1,12 @@
-import {Marker} from 'leaflet';
+/**
+ * @file Компоненты карты.
+ * @module components/cruise-map
+ * @version 1.0.0
+ * @description Модуль содержит классы, управляющие маркерами и описаниями на карте.
+ */
+
 import {TypedEventTarget} from 'typescript-event-target';
+import {Marker} from 'leaflet';
 import stopMarkerIcon from '../../icons/stop-marker.png';
 import gatewayMarkerIcon from '../../icons/gateway.svg';
 import linerIcon from '../../icons/liner.svg';
@@ -47,6 +54,7 @@ import LocatedItemDescription, {
 } from '../located-item-description';
 import './index.css';
 
+// Иконки для маркеров мест по категориям
 const categorizedMarkers: Record<string, string> = {
 	'Путешествия' : pillarMarkerIcon, // default
 	'Музеи' : museyMarkerIcon,
@@ -62,6 +70,7 @@ const categorizedMarkers: Record<string, string> = {
 	'Стоянки' : yakorMarkerIcon
 };
 
+// Иконки для попапов мест по категориям
 const categorizedIcons: Record<string, string> = {
 	'Путешествия' : pillarIcon, // default
 	'Музеи' : museyIcon,
@@ -77,6 +86,7 @@ const categorizedIcons: Record<string, string> = {
 	'Стоянки' : yakorIcon
 };
 
+// Цвета для иконок
 const iconColors: Record<string, string> = {
 	'Путешествия' : 'var(--main)', // default
 	'Музеи' : 'var(--main)',
@@ -92,54 +102,123 @@ const iconColors: Record<string, string> = {
 	'Стоянки' : 'var(--main)'
 };
 
-/** Отображение круизов (кораблей, путей, остановок и т.д.) на карте */
+/**
+ * Отображение круизов, кораблей, путей, остановок и т.д. на карте.
+ */
 export default class CruiseMap {
 
+	/** Ссылка на объект карты.
+	  * @type {WorldMap}
+	  */
 	declare private map: WorldMap;
 
 	declare private _mapMode: string;
+	/** Режим работы карты.
+	  * @type {string}
+	  */
 	get mapMode() { return this._mapMode; }
 
 	declare private _trackLayer: Layer;
+	/** Слой треков круизов.
+	  * @type {VisibilityControl}
+	  */
 	get trackLayer(): VisibilityControl {return this._trackLayer;}
 	declare private _sunsetsLayer: Layer;
+	/** Слой закатов.
+	  * @type {VisibilityControl}
+	  */
 	get sunsetsLayer(): VisibilityControl {return this._sunsetsLayer;}
 	declare private _sunrisesLayer: Layer;
+	/** Слой восходов.
+	  * @type {VisibilityControl}
+	  */
 	get sunrisesLayer(): VisibilityControl {return this._sunrisesLayer;}
 	declare private _gatewaysLayer: Layer;
+	/** Слой шлюзов.
+	  * @type {VisibilityControl}
+	  */
 	get gatewaysLayer(): VisibilityControl {return this._gatewaysLayer;}
 	declare private _shipLayer: Layer<ShipMarker>;
+	/** Слой маркеров теплоходов.
+	  * @type {VisibilityControl}
+	  */
 	get shipLayer(): VisibilityControl {return this._shipLayer;}
 	declare private _stopsLayer: Layer;
+	/** Слой стоянок.
+	  * @type {VisibilityControl}
+	  */
 	get stopsLayer(): VisibilityControl {return this._stopsLayer;}
 	declare private _sightsLayer: Layer;
+	/** Слой достопримечательностей.
+	  * @type {VisibilityControl}
+	  */
 	get sightsLayer(): VisibilityControl {return this._sightsLayer;}
 
+	/**
+	 * Добавить интерактивный маркер.
+	 * @param {("track"|"sunsets"|"sunrises"|"gateways"|"ship"|"stops"|"sights")} layer - Слой, на который добавляется маркер.
+	 * @param {InteractiveMapMarker} interactiveMarker - объект маркера (см. {@link module:components/map map}).
+	 * @returns {void}
+	 * @description Добавляет на карту маркер со всплывающим описанием.
+	 */
 	addInteractiveMarker(layer: 'track' | 'sunsets' | 'sunrises' | 'gateways' | 'ship' | 'stops' | 'sights', interactiveMarker: any) {
 		this[ `_${layer}Layer` ].addInteractiveMarker( interactiveMarker );
 	}
 
+	/**
+	 * Удалить маркер.
+	 * @param {("track"|"sunsets"|"sunrises"|"gateways"|"ship"|"stops"|"sights")} layer - Слой, с которого удалить маркер.
+	 * @param {MapMarker} marker - обект маркера (см. {@link module:components/map map})
+	 * @returns {void}
+	 */
 	removeMarker(layer: 'track' | 'sunsets' | 'sunrises' | 'gateways' | 'ship' | 'stops' | 'sights', marker: any) {
 		this[ `_${layer}Layer` ].removeMarker( marker );
 	}
 
+	/**
+	 * Нарисовать ломаную.
+	 * @param {("track"|"sunsets"|"sunrises"|"gateways"|"ship"|"stops"|"sights")} layer - Слой для размещения линии.
+	 * @param {MapPolyline} polyline - обект ломаной (см. {@link module:components/map map})
+	 * @returns {void}
+	 * @description Добавляет на карту ломаную линию по заданным точкам.
+	 */
 	drawPolyline(layer: 'track' | 'sunsets' | 'sunrises' | 'gateways' | 'ship' | 'stops' | 'sights', polyline: MapPolyline) {
 		this[ `_${layer}Layer` ].drawPolyline( polyline );
 	}
 
+	/**
+	 * Удалить ломаную.
+	 * @param {("track"|"sunsets"|"sunrises"|"gateways"|"ship"|"stops"|"sights")} layer - Слой для удаления линии.
+	 * @param {MapPolyline} polyline - обект ломаной (см. {@link module:components/map map})
+	 * @returns {void}
+	 */
 	clearPolyline(layer: 'track' | 'sunsets' | 'sunrises' | 'gateways' | 'ship' | 'stops' | 'sights', polyline: MapPolyline) {
 		this[ `_${layer}Layer` ].clearPolyline( polyline );
 	}
 
 	private _cruises: Map<string, CruiseAssets> = new Map();
+	/**
+	 * Получить объект круиза.
+	 * @param {string} id - ID круиза.
+	 * @returns {CruiseAssets} Объект круиза, размещённого на карте.
+	 */
 	cruiseAsset( id: string ) {
 		return this._cruises.get( id );
 	}
 
 	private _ships: Map<string, ShipMarker> = new Map();
+	/**
+	 * Получить объект теплохода.
+	 * @param {string} id - ID теплохода.
+	 * @returns {ShipMarker} Объект теплохода, размещённого на карте.
+	 */
 	shipMarker( id: string ) {
 		return this._ships.get( id );
 	}
+	/**
+	 * Список всех теплоходов, размещённых на карте.
+	 * @returns {Ship[]} Данные теплоходов, размещённых на карте (см. {@link module:state/api api}).
+	 */
 	get ships(): Ship[] { return [ ...this._ships.values() ].map( item => item.ship ); }
 
 	declare selectedShip: ShipMarker | undefined;
@@ -147,21 +226,34 @@ export default class CruiseMap {
 	private stoppedShips: Record<string, SVGElement[]> = {};
 
 	declare private _text: Text;
+	/** Текстовые константы, загруженные в конструкторе класса. */
 	get text() { return this._text; }
-	/** Счетчики остановок / достопримечательностей для избежания повторного их добавления */
+	/** Счетчик остановок для избежания повторного их добавления */
 	private _attachedStops: Record<string, {
 		marker: InteractiveMapMarker,
 		timesAttached: number,
 	}> = {};
+	/** Счетчик достопримечательностей для избежания повторного их добавления */
 	private _attachedSights: Record<string, {
 		marker: InteractiveMapMarker,
 		timesAttached: number,
 	}> = {};
+	/** Счетчик шлюзов для избежания повторного их добавления */
 	private _attachedGateways: Record<string, {
 		marker: InteractiveMapMarker,
 		timesAttached: number,
 	}> = {};
 
+	/**
+	 * Разместить на карте маркер стоянки, достопримечательности или шлюза.
+	 * @param {string} id - ID объекта.
+	 * @param {(0|1|2)} type - Тип объекта (см. {@link module:state/api api}).
+	 * @param {string} category - Категория достопримечательности (для стоянок и шлюзов не применяется).
+	 * @param {number} lat - Географическая широта.
+	 * @param {number} lng - Географическая долгота.
+	 * @param {Promise} popup - Промис, возвращающий всплывающее окно (см. {@link module:components/map map}).
+	 * @returns {void}
+	 */
 	attachLocationMarker( id: string, type: LocationType, category: string, lat: number, lng: number, popup: InteractiveMapMarker['popupContent'] ): LocationMarker {
 		const counter = [ this._attachedStops, this._attachedSights, this._attachedGateways ][ type ];
 		const layer = [ this._stopsLayer, this._sightsLayer, this._gatewaysLayer ][ type ];
@@ -176,6 +268,12 @@ export default class CruiseMap {
 		return counter[ id ].marker;
 	}
 
+	/**
+	 * Удалить маркер стоянки, достопримечательности или шлюза.
+	 * @param {string} id - ID объекта.
+	 * @param {(0|1|2)} type - Тип объекта (см. {@link module:state/api api}).
+	 * @returns {void}
+	 */
 	detachLocationMarker( id: string, type: LocationType ) {
 		const counter = [ this._attachedStops, this._attachedSights, this._attachedGateways ][ type ];
 		const layer = [ this._stopsLayer, this._sightsLayer, this._gatewaysLayer ][ type ];
@@ -189,7 +287,9 @@ export default class CruiseMap {
 	}
 
 	private _timelinePoint: Date = new Date(0);
-	/** Текущий выбранный момент времени */
+	/** Текущий выбранный момент времени
+	  * @type {Date}
+	  */
 	get timelinePoint(): Date {
 		return this._timelinePoint;
 	}
@@ -206,6 +306,12 @@ export default class CruiseMap {
 		timerangechanged: Event,
 	}> = new TypedEventTarget();
 
+	/**
+	 * Создаёт экземпляр CruiseMap.
+	 * @param {WorldMap} map - Объект карты.
+	 * @param {Object} text - Текстовые константы для использования на карте.
+	 * @param {("cruise"|"stops"|"single-stop"|"places"|"single-place"|"default")} mapMode - Режим работы карты.
+	 */
 	constructor(map: WorldMap, text: Text, mapMode: string) {
 		this.map = map;
 		this._mapMode = mapMode;
@@ -237,6 +343,10 @@ export default class CruiseMap {
 		} );
 	}
 
+	/**
+	 * Обновляет счётчик количества теплоходов, не занятых в круизе в данный момент.
+	 * @returns {void}
+	 */
 	updateShipsCounter() {
 		const shipsNotInCruise = [ ...this._ships.values() ].filter( ship => !ship.activeCruise ).length;
 		const counterElement = document.querySelector('.map-overlay--ships-count') as HTMLElement;
@@ -245,6 +355,14 @@ export default class CruiseMap {
 		}
 	}
 
+	/**
+	 * Добавить круиз на карту.
+	 * @param {Cruise} cruise - Объект данных круиза (см. {@link module:state/api api}).
+	 * @returns {void}
+	 * @description Добавление круизов используется для показа треков круизов, стоянок, мест, шлюзов,
+	 * восходов и закатов. Для теплоходов, добавленных на карту, круизы добавляются и удаляются автоматически.
+	 * Не рекомендуется использовать напрямую.
+	 */
 	addCruise(cruise: Cruise) {
 		if (this._cruises.has( cruise.id ))
 			return;
@@ -252,6 +370,11 @@ export default class CruiseMap {
 		this._cruises.set( cruise.id, new CruiseAssets( this, cruise ) );
 	}
 
+	/**
+	 * Удалить круиз с карты.
+	 * @param {string} id - ID круиза.
+	 * @returns {void}
+	 */
 	removeCruise(id: string) {
 		if (!this._cruises.has(id))
 			return;
@@ -260,6 +383,18 @@ export default class CruiseMap {
 		cruise.remove();
 	}
 
+	/**
+	 * Добавить теплоход на карту.
+	 * @param {Ship} ship - Объект данных теплохода (см. {@link module:state/api api}).
+	 * @returns {void}
+	 * @description При добавлении теплохода на карте отображается маркер теплохода в позиции,
+	 * соответствующей заданному моменту времени. Загружаются круизы, которые выполняет теплоход
+	 * в это время. По клику теплоход становится активным, и для него отображается трек круиза,
+	 * маркеры стоянок, мест, шлюзов, восходов и закатов. Если в заданный момент времени теплоход
+	 * не находится в круизе, маркер не отображается. Информационное табло на карте показывает
+	 * количество теплоходов, добавленных на карту, но не находящихся в круизе. Текущее время карты
+	 * устанавливается сеттером {@link module:components/cruise-map~CruiseMap#timelinePoint timelinePoint}.
+	 */
 	addShip(ship: Ship) {
 		if (this._ships.has( ship.id )) return;
 
@@ -295,6 +430,11 @@ export default class CruiseMap {
 		this.events.dispatchEvent(new Event('timerangechanged'));
 	}
 
+	/**
+	 * Удалить теплоход с карты.
+	 * @param {string} id - ID теплохода.
+	 * @returns {void}
+	 */
 	removeShip({id}: {id: string}): void {
 		if (!this._ships.has( id )) return;
 		const shipMarker = this._ships.get( id );
@@ -305,6 +445,14 @@ export default class CruiseMap {
 		this.events.dispatchEvent(new Event('timerangechanged'));
 	}
 
+	/**
+	 * Принудительно отметить места на карте.
+	 * @param {Location[]} places - список мест или стоянок (см. {@link module:state/api api}).
+	 * @returns {void}
+	 * @description В обычном режиме работы на карте отображаются только те места, которые связаны
+	 * с текущими круизами активного теплохода. Этот метод позволяет добавить на карту любые маркеры
+	 * мест в режиме показа мест или стоянок.
+	 */
 	forceShowPlaces( places: Location[] ) {
 		if (places?.length) {
 			const latitudes = [];
@@ -329,6 +477,15 @@ export default class CruiseMap {
 		}
 	}
 
+	/**
+	 * Разместить корабли на стоянке.
+	 * @param {string} coord - координаты стоянки в виде строки.
+	 * @param {SVGElement} icon - значок маркера теплохода.
+	 * @param {boolean} atStop - теплоход находится на стоянке.
+	 * @returns {void}
+	 * @description Этот метод располагает маркеры кораблей в ряд, когда они находятся на одной
+	 * стоянке. Вызывается при входе теплохода на стоянку и при выходе с неё.
+	 */
 	checkStoppedShips( coord: string, icon: SVGElement, atStop: boolean ) {
 		if (atStop) {
 			( this.stoppedShips[ coord ] ??= [] ).push( icon );
@@ -353,7 +510,9 @@ export default class CruiseMap {
 	}
 }
 
-let markersCounter = 0;
+/**
+ * Маркер места, стоянки или шлюза.
+ */
 class LocationMarker implements InteractiveMapMarker {
 
 	declare icon: InteractiveMapMarker['icon'];
@@ -364,6 +523,15 @@ class LocationMarker implements InteractiveMapMarker {
 	iconSize: [number, number] = [33, 33];
 	events = new TypedEventTarget();
 
+	/**
+	 * Создаёт экземпляр LocationMarker.
+	 * @param {(0|1|2)} locationType - Тип объекта (см. {@link module:state/api api}).
+	 * @param {string} locationCategory - Категория объекта (только для достопримечательностей,
+	 *                 для стоянок и шлюзов игнорируется).
+	 * @param {number} lat - Географическая широта.
+	 * @param {number} lng - Географическая долгота.
+	 * @param {Promise} popupContent - Промис, возвращающий всплывающее окно (см. {@link module:components/map map}).
+	 */
 	constructor(
 		locationType: LocationType,
 		locationCategory: string,
@@ -397,6 +565,9 @@ class LocationMarker implements InteractiveMapMarker {
 
 }
 
+/**
+ * Объект, управляющий отображением на карте маркера теплохода и связанной с ним информации.
+ */
 class ShipMarker implements InteractiveMapMarker {
 
 	declare private map: CruiseMap;
@@ -423,6 +594,13 @@ class ShipMarker implements InteractiveMapMarker {
 	declare ship: Ship;
 	private rotateAngle = 0;
 
+	/**
+	 * Создаёт экземпляр ShipMarker.
+	 * @param {CruiseMap} map - Объект карты.
+	 * @param {Ship} ship - Объект данных теплохода (см. {@link module:state/api api}).
+	 * @param {Company} company - Объект данных круизной компании (см. {@link module:state/api api}).
+	 * @param {Date} datetime - Текущее время на карте.
+	 */
 	constructor(
 		map: CruiseMap,
 		ship: Ship,
@@ -439,6 +617,11 @@ class ShipMarker implements InteractiveMapMarker {
 		this.move( datetime );
 	}
 
+	/**
+	 * Создать всплывающее окно.
+	 * @returns {Promise} Промис, возвращающий всплывающее окно.
+	 * @description Асинхронный метод, возвращающий DOM элемент с информацией о теплоходе.
+	 */
 	private async shipPopup() {
 		const descriptionElements = this.cruises.map( cruise => {
 			const {
@@ -495,7 +678,14 @@ class ShipMarker implements InteractiveMapMarker {
 		return itemDescription.domNode;
 	}
 
-	/** Изменить координаты и угол поворота на точку в пути в указанное время */
+	/**
+	 * Переместить теплоход.
+	 * @param {Date} datetime - текущее время карты.
+	 * @returns {Promise} Пустой промис.
+	 * @description Асинхронный метод. Изменяет координаты и угол поворота маркера теплохода
+	 * на точку в пути в указанное время, а также обновляет на карте круизы, выполняемые теплоходом
+	 * в указанное время, и всю связанную с ними информацию.
+	 */
 	async move(datetime: Date): Promise<void> {
 		this.datetime = datetime;
 		const cruises = this.ship.cruisesOn( datetime );
@@ -596,6 +786,10 @@ class ShipMarker implements InteractiveMapMarker {
 		}
 	}
 
+	/**
+	 * Сделать теплоход активным.
+	 * @returns {void}
+	 */
 	activate() {
 		if (this.map.selectedShip !== this) {
 			this.icon.classList.add( 'active' );
@@ -615,6 +809,10 @@ class ShipMarker implements InteractiveMapMarker {
 		}
 	}
 
+	/**
+	 * Сделать теплоход неактивным.
+	 * @returns {void}
+	 */
 	deactivate() {
 		if (this.map.selectedShip === this) {
 			this.icon.classList.remove( 'active' );
@@ -630,6 +828,10 @@ class ShipMarker implements InteractiveMapMarker {
 		}
 	}
 
+	/**
+	 * Очистить данные при удалении теплохода с карты.
+	 * @returns {void}
+	 */
 	remove() {
 		this.deactivate();
         for (const cruise of this.cruises) {
@@ -639,13 +841,22 @@ class ShipMarker implements InteractiveMapMarker {
 		this._isDeleted = true;
 	}
 
+	/**
+	 * Повернуть маркер теплохода.
+	 * @returns {void}
+	 */
 	private rotate(): void {
-			this.icon.style.setProperty(
-				'--cruise-map__marker_angle',
-				`${this.rotateAngle}turn`,
-			);
+		this.icon.style.setProperty(
+			'--cruise-map__marker_angle',
+			`${this.rotateAngle}turn`,
+		);
 	}
 
+	/**
+	 * Создать маркер теплохода.
+	 * @returns {void}
+	 * @description Для внутреннего использования.
+	 */
 	_createMarker(): void {
 		if (!this.marker) {
 			this.map.addInteractiveMarker( 'ship', this );
@@ -712,6 +923,11 @@ class ShipMarker implements InteractiveMapMarker {
 		}
 	}
 
+	/**
+	 * Удалить маркер теплохода.
+	 * @returns {void}
+	 * @description Для внутреннего использования.
+	 */
 	_removeMarker() {
 		if (this.marker) {
 			if (this.activeCruise) {
@@ -724,6 +940,9 @@ class ShipMarker implements InteractiveMapMarker {
 	}
 }
 
+/**
+ * Объект, управляющий отображением на карте информации, связанной с отдельным круизом.
+ */
 class CruiseAssets {
 	declare map: CruiseMap;
 	declare cruise: Cruise;
@@ -741,15 +960,31 @@ class CruiseAssets {
 	gateways: Record<string, InteractiveMapMarker> = {};
 	_gatewaysVisible: boolean = false;
 
+	/**
+	 * Создаёт экземпляр CruiseAssets.
+	 * @param {CruiseMap} map - Объект карты.
+	 * @param {Cruise} cruise - Объект данных круиза (см. {@link module:state/api api}).
+	 */
 	constructor( map: CruiseMap, cruise: Cruise ) {
 		this.map = map;
 		this.cruise = cruise;
 	}
 
+	/**
+	 * Установить приоритет загрузки трека круиза.
+	 * @param {boolean} highPriority - Высокий приоритет загрузки.
+	 * @returns {void}
+	 */
 	setHighPriorityLoading( highPriority: boolean ) {
 		this.cruise.setHighPriorityLoading( highPriority );
 	}
 
+	/**
+	 * Прогрессивная загрузка трека круиза.
+	 * @returns {Promise} Пустой промис.
+	 * @description Для ускорения вывода круизов на карту точки треков загружаются в четыре этапа.
+	 * Этот метод запускает очередной этап загрузки.
+	 */
 	async loadTrackProgressive() {
 		const route = await this.cruise.route;
 		if (!this._isDeleted && this.cruise.routeReadyStage > 0 && this.cruise.routeReadyStage < 4) {
@@ -767,12 +1002,20 @@ class CruiseAssets {
 		}
 	}
 
+	/**
+	 * Очистить данные при удалении круиза с карты.
+	 * @returns {void}
+	 */
 	remove() {
 		this.hideAll();
 		this.cruise.cancelLoadTrack();
 		this._isDeleted = true;
 	}
 
+	/**
+	 * Показать на карте все маркеры объектов, связанных с круизом, на всех активных слоях.
+	 * @returns {void}
+	 */
 	showAll() {
 		for (const layer of [ 'sunsets', 'sunrises', 'gateways', 'stops', 'sights' ]) {
 			const ucLayer = layer[0].toUpperCase() + layer.slice(1);
@@ -783,12 +1026,21 @@ class CruiseAssets {
 		}
 	}
 
+	/**
+	 * Очистить на карте все маркеры объектов, связанных с круизом.
+	 * @returns {void}
+	 */
 	hideAll() {
 		for (const layer of [ 'Track', 'Sunsets', 'Sunrises', 'Gateways', 'Stops', 'Sights' ]) {
 			( this as any )[ `hide${layer}` ]();
 		}
 	}
 
+	/**
+	 * Показать на карте трек круиза.
+	 * @returns {Promise} Пустой промис.
+	 * @description Асинхронный метод.
+	 */
 	async showTrack( marker: Marker ) {
 		if (this._trackVisible) return;
 		this._trackVisible = true;
@@ -820,6 +1072,10 @@ class CruiseAssets {
 		}
 	}
 
+	/**
+	 * Удалить с карты трек круиза.
+	 * @returns {void}
+	 */
 	hideTrack() {
 		if (this._trackVisible) {
 			this._trackVisible = false;
@@ -831,6 +1087,12 @@ class CruiseAssets {
 		}
 	}
 
+	/**
+	 * Создать всплывающее окно.
+	 * @returns {Promise} Промис, возвращающий всплывающее окно.
+	 * @description Асинхронный метод, возвращающий DOM элемент с информацией о стоянке или
+	 * достопримечательности.
+	 */
 	static async locationPopup( stop: Location, map: CruiseMap ): Promise<Element> {
 		//~ const {lat, lng, type, name, category, description, image, link } = stop;
 		const {lat, lng, type, name, category, image, link } = stop;
@@ -901,6 +1163,11 @@ class CruiseAssets {
 		return itemDescription.domNode;
 	}
 
+	/**
+	 * Создать всплывающее окно.
+	 * @returns {Promise} Промис, возвращающий всплывающее окно.
+	 * @description Асинхронный метод, возвращающий DOM элемент с информацией о восходе или закате.
+	 */
 	private static async sunriseSunsetPopup( type: 'sunrise' | 'sunset', point: TrackPoint, map: CruiseMap ): Promise<Element> {
 		const {lat, lng, arrival, side} = point;
 		const title = type === 'sunset' ? 'Закат' : 'Восход';
@@ -929,6 +1196,11 @@ class CruiseAssets {
 		return itemDescription.domNode;
 	}
 
+	/**
+	 * Создать всплывающее окно.
+	 * @returns {Promise} Промис, возвращающий всплывающее окно.
+	 * @description Асинхронный метод, возвращающий DOM элемент с информацией о шлюзе.
+	 */
 	private static async gatewayPopup( gateway: Location, map: CruiseMap ): Promise<Element> {
 		const {lat, lng, name} = gateway;
 		const activeCruise = map.selectedShip?.activeCruise;
@@ -963,6 +1235,11 @@ class CruiseAssets {
 		return itemDescription.domNode;
 	}
 
+	/**
+	 * Показать стоянки.
+	 * @returns {Promise} Пустой промис.
+	 * @description Асинхронный метод, размещает на карте маркеры стоянок.
+	 */
 	async showStops() {
 		if (!this._stopsVisible && this.map.selectedShip?.cruises.includes( this.cruise )) {
 			this._stopsVisible = true;
@@ -980,6 +1257,11 @@ class CruiseAssets {
 			}
 		}
 	}
+	/**
+	 * Скрыть стоянки.
+	 * @returns {void}
+	 * @description Удаляет маркеры стоянок.
+	 */
 	hideStops() {
 		this._stopsVisible = false;
 		for (const id of Object.keys( this.stops )) {
@@ -988,6 +1270,11 @@ class CruiseAssets {
 		}
 	}
 
+	/**
+	 * Показать достопримечательности.
+	 * @returns {Promise} Пустой промис.
+	 * @description Асинхронный метод, размещает на карте маркеры достопримечательностей.
+	 */
 	async showSights() {
 		if (!this._sightsVisible && this.map.selectedShip?.cruises.includes( this.cruise )) {
 			this._sightsVisible = true;
@@ -1005,6 +1292,11 @@ class CruiseAssets {
 			}
 		}
 	}
+	/**
+	 * Скрыть достопримечательности.
+	 * @returns {void}
+	 * @description Удаляет маркеры достопримечательностей.
+	 */
 	hideSights() {
 		this._sightsVisible = false;
 		for (const id of Object.keys( this.sights )) {
@@ -1013,6 +1305,11 @@ class CruiseAssets {
 		}
 	}
 
+	/**
+	 * Показать закаты.
+	 * @returns {Promise} Пустой промис.
+	 * @description Асинхронный метод, размещает на карте маркеры закатов.
+	 */
 	async showSunsets() {
 		if (!this._sunsetsVisible && this.cruise === this.map.selectedShip?.activeCruise) {
 			this._sunsetsVisible = true;
@@ -1033,13 +1330,22 @@ class CruiseAssets {
 			}
 		}
 	}
-
+	/**
+	 * Скрыть закаты.
+	 * @returns {void}
+	 * @description Удаляет маркеры закатов.
+	 */
 	hideSunsets() {
 		this._sunsetsVisible = false;
 		this.sunsets.forEach( marker => this.map.removeMarker( 'sunsets', marker ) );
 		this.sunsets = [];
 	}
 
+	/**
+	 * Показать восходы.
+	 * @returns {Promise} Пустой промис.
+	 * @description Асинхронный метод, размещает на карте маркеры восходов.
+	 */
 	async showSunrises() {
 		if (!this._sunrisesVisible && this.cruise === this.map.selectedShip?.activeCruise) {
 			this._sunrisesVisible = true;
@@ -1060,12 +1366,22 @@ class CruiseAssets {
 			}
 		}
 	}
+	/**
+	 * Скрыть восходы.
+	 * @returns {void}
+	 * @description Удаляет маркеры восходов.
+	 */
 	hideSunrises() {
 		this._sunrisesVisible = false;
 		this.sunrises.forEach( marker => this.map.removeMarker( 'sunrises', marker ) );
 		this.sunrises = [];
 	}
 
+	/**
+	 * Показать шлюзы.
+	 * @returns {Promise} Пустой промис.
+	 * @description Асинхронный метод, размещает на карте маркеры шлюзов.
+	 */
 	async showGateways() {
 		if (!this._gatewaysVisible && this.map.selectedShip?.cruises.includes( this.cruise )) {
 			this._gatewaysVisible = true;
@@ -1083,6 +1399,11 @@ class CruiseAssets {
 			}
 		}
 	}
+	/**
+	 * Скрыть шлюзы.
+	 * @returns {void}
+	 * @description Удаляет маркеры шлюзов.
+	 */
 	hideGateways() {
 		this._gatewaysVisible = false;
 		for (const id of Object.keys( this.gateways )) {

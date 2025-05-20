@@ -38,6 +38,7 @@ module.exports = {
 
 	output: {
 		path: path.resolve(__dirname, 'dist'),
+		clean: isProduction
 	},
 
 	devtool: isProduction ? false : 'source-map',

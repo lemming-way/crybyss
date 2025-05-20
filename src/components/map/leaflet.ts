@@ -1,3 +1,9 @@
+/**
+ * @file Обёртка для Leaflet.
+ * @module components/map/leaflet
+ * @version 1.0.0
+ */
+
 import {
   map,
   Map as LMap,
@@ -31,12 +37,17 @@ import "./leaflet.css";
 import * as L from "leaflet";
 import "./yandex.js";
 
+/** Класс-обёртка для работы с функциями Leaflet */
 export default abstract class LeafletMap extends Map {
-  // protected abstract tileLayer(): TileLayer;
 
+  /** URL подложки карты по умолчанию */
   private static readonly TILE_LAYER_URL =
     "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
 
+  /**
+   * Слой подложки
+   * @type {TileLayer}
+   */
   protected tileLayer(): TileLayer {
     return new TileLayer(LeafletMap.TILE_LAYER_URL);
   }
@@ -48,6 +59,17 @@ export default abstract class LeafletMap extends Map {
 
   declare mainLayer: Layer;
 
+  /**
+   * Создаёт карту.
+   * @param {HTMLElement} node - Контейнер карты.
+   * @param {LatLngExpression} center - Центр карты.
+   * @param {number} zoom - Масштаб карты.
+   * @param {(number|null|undefined)} minZoom - Минимальный масштаб карты.
+   * @param {(number|undefined)} maxZoom - Максимальный масштаб карты.
+   * @description Создаётся карта с функциями измерения расстояний, масштабирования, переключения
+   * подложки, координатами курсора, индикатором масштаба. Кнопки для управления этими функциями
+   * должны быть созданы отдельно в шаблонах HTML.
+   */
   constructor(node: HTMLElement, center: LatLngExpression, zoom: number, minZoom?: number | null, maxZoom?: number) {
     super(node);
     this.map = map(node, {
@@ -334,6 +356,18 @@ export default abstract class LeafletMap extends Map {
     getZoom();
   }
 
+	/**
+	 * Разместить и масштабировать карту по заданному прямоугольнику.
+   * @param {number} south - Южная граница карты.
+   * @param {number} west - Западная граница карты.
+   * @param {number} north - Северная граница карты.
+   * @param {number} east - Восточная граница карты.
+   * @returns {void}
+   * @description Карта размещается и масштабируется таким образом, чтобы показывать заданный
+   * прямоугольник. От прямоугольника до границ карты оставляется расстояние 20 пикселей.
+   * Максимальный масштаб карты ограничен 12, если прямоугольник очень маленький, то он будет
+   * отстоять дальше от границ карты.
+	 */
   fitBounds( south: number, west: number, north: number, east: number ) {
     // Создаем границы для карты
     const bounds = L.latLngBounds(
@@ -349,6 +383,11 @@ export default abstract class LeafletMap extends Map {
     });
   }
 
+  /**
+   * Добавить слой на карту.
+   * @returns {LeafletPane} Новый слой.
+   * @description Создаёт на карте и возвращает новый слой.
+   */
   addLayer() {
     return new LeafletPane(
       this.map,
@@ -357,10 +396,26 @@ export default abstract class LeafletMap extends Map {
     );
   }
 
+  /**
+   * Сдвинуть центр карты по указанным координатам.
+   * @param {number} lat - Географическая широта.
+   * @param {number} lng - Географическая долгота.
+   * @returns {void}
+   */
   panTo(lat: number, lng: number) {
     this.map.panTo([lat, lng]);
   }
 
+	/**
+   * Установка границ, за которые не будут выходить попапы.
+   * @param {number} top - расстояние от верхнего края карты.
+   * @param {number} right - расстояние от правого края карты.
+   * @param {number} bottom - расстояние от нижнего края карты.
+   * @param {number} left - расстояние от левого края карты.
+   * @returns {void}
+   * @description В настоящее время не используется, так как применяется собственный алгоритм
+   * размещения попапов на экране.
+   */
   setOverlayBounds(top: number, right: number, bottom: number, left: number) {
     this.autoPan[0].x = left;
     this.autoPan[0].y = top;
@@ -368,6 +423,14 @@ export default abstract class LeafletMap extends Map {
     this.autoPan[1].y = bottom;
   }
 
+	/**
+   * Проекция координат на карту.
+   * @param {number} lat - Географическая широта.
+   * @param {number} lng - Географическая долгота.
+   * @returns {number[]} Координаты внутри DOM объекта карты.
+	 * @description Преобразовать географические координаты в экранные координаты относительно
+   * контейнера карты.
+	 */
   coordsToPoint(lat: number, lng: number): [number, number] {
     const { x, y } = this.map.project([lat, lng], 1);
     return [x, y];
@@ -381,7 +444,10 @@ class LeafletPane<
 
   declare visible: boolean;
 
-  /** Стандартные панели leaflet, внутри которых будут располагаться панели слоя */
+  /**
+   * Стандартные панели leaflet, внутри которых будут располагаться панели слоя
+   * @type {Set<string>}
+   */
   protected static parentPanes: Set<string> = new Set([
     "overlayPane",
     "markerPane",
@@ -398,10 +464,19 @@ class LeafletPane<
   /** Точки, задаваемые setOverlayBounds */
   declare private autoPan: [Point, Point];
 
-  /** Соответствия объектов leaflet сущностям приложения */
+  /**
+   * Соответствия объектов leaflet сущностям приложения
+   * @type {WeakMap}
+   */
   private representations: WeakMap<TMarker | MapPolyline, LLayer[]> =
     new WeakMap();
 
+  /**
+   * Создаёт объект LeafletPane.
+   * @param {L.Map} map - Карта Leaflet.
+   * @param {Point[]} autoPan - Отступы от края карты для попапов. В настоящий момент не используется.
+   * @param {string} paneName - ID слоя.
+   */
   constructor(map: LMap, autoPan: [Point, Point], paneName = "") {
     super();
     this.visible = true;
@@ -423,6 +498,10 @@ class LeafletPane<
     });
   }
 
+  /**
+   * Показать слой на экране.
+   * @returns {void}
+   */
   show() {
     if (this.visible) return;
     this.visible = true;
@@ -430,6 +509,10 @@ class LeafletPane<
     this.events.dispatchEvent(new Event("visibilitychange"));
   }
 
+  /**
+   * Скрыть слой на экране.
+   * @returns {void}
+   */
   hide() {
     if (!this.visible) return;
     this.visible = false;
@@ -439,11 +522,20 @@ class LeafletPane<
     this.events.dispatchEvent(new Event("visibilitychange"));
   }
 
+  /**
+   * Переключить видимость слоя.
+   * @returns {void}
+   */
   toggle() {
     if (this.visible) this.hide();
     else this.show();
   }
 
+  /**
+   * Добавить маркер на карту.
+   * @param {MapMarker} - Объект маркера.
+   * @returns {void}
+   */
   addMarker(mapMarker: TMarker) {
     mapMarker.marker = marker([mapMarker.lat, mapMarker.lng], {
       icon: new DOMIcon({
@@ -455,6 +547,12 @@ class LeafletPane<
     this.syncMarker(mapMarker);
   }
 
+  /**
+   * Добавить интерактивный маркер на карту.
+   * @param {InteractiveMapMarker} - Объект маркера.
+   * @returns {void}
+   * @description При клике по интерактивному маркеру открывается всплывающее окно.
+   */
   addInteractiveMarker(interactiveMarker: TMarker & InteractiveMapMarker) {
     interface popupMarker extends Marker<any> {
       isOpen?: boolean;
@@ -605,6 +703,12 @@ class LeafletPane<
     this.syncMarker(interactiveMarker);
   }
 
+  /**
+   * Удалить маркер с карты.
+   * @param {MapMarker} marker - Объект маркера.
+   * @returns {void}
+   * @description Работает для простых и интерактивных маркеров.
+   */
   removeMarker(marker: TMarker) {
     if (marker.marker) {
       this.removePath(marker);
@@ -612,7 +716,12 @@ class LeafletPane<
     }
   }
 
-  /** Связать маркер приложения и маркер leaflet */
+  /**
+   * Связать маркер приложения и маркер leaflet.
+   * @param {MapMarker} marker - Объект маркера.
+   * @returns {void}
+   * @description Добавляет маркер в коллекцию representations.
+   */
   private syncMarker(marker: TMarker): void {
     const lMarker = marker.marker;
     this.representations.set(marker, [lMarker]);
@@ -622,7 +731,12 @@ class LeafletPane<
     lMarker.addTo(this.map);
   }
 
-  /** В данный момент никак не реализован InteractiveMapPolylinePoint */
+  /**
+   * Нарисовать линию.
+   * @param {(MapPolyline|InteractiveMapPolyline)} mapPolyline - Объект линии.
+   * @returns {void}
+   * @description В данный момент никак не реализован InteractiveMapPolylinePoint.
+   */
   drawPolyline(mapPolyline: MapPolyline | InteractiveMapPolyline) {
     if (!this.representations.has( mapPolyline )) {
       const { points } = mapPolyline;
@@ -665,12 +779,22 @@ class LeafletPane<
     }
   }
 
+  /**
+   * Удалить линию с карты.
+   * @param {MapPolyline} polyline - Объект линии.
+   * @returns {void}
+   * @description Работает для простых и интерактивных линий.
+   */
   clearPolyline(polyline: MapPolyline) {
     if (this.representations.has( polyline )) {
       this.removePath(polyline);
     }
   }
 
+  /**
+   * Получить панели слоя.
+   * @yields {HTMLElement} DOM-элемент панели.
+   */
   private *panes(): Iterable<HTMLElement> {
     for (const parentPaneName of this.parentPanes)
       yield this.map.getPane(this.compositePaneName(parentPaneName));
@@ -694,7 +818,10 @@ type ExposedDivIcon = DivIcon & {
   container: HTMLElement;
 };
 
-/** Иконка в стилизованном контейнере */
+/**
+ * Иконка в стилизованном контейнере
+ * @class DOMIcon
+ */
 const DOMIcon = DivIcon.extend({
   createIcon() {
     const div = document.createElement("div");

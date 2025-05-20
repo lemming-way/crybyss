@@ -1,25 +1,38 @@
+/**
+ * @file Интерфейс карты
+ * @module components/map
+ * @version 1.0.0
+ * @description Интерфейс класса-обёртки для Leaflet.
+ */
+
+import {TypedEventTarget} from 'typescript-event-target';
 import {Marker} from 'leaflet';
 import {Graph} from '@datastructures-js/graph';
-import {TypedEventTarget} from 'typescript-event-target';
 import {DOMComponent} from '../dom';
 import './index.css';
 
-/** Низкоуровневый интерфейс карты */
+/** Низкоуровневый интерфейс карты. */
 export default abstract class Map extends DOMComponent {
 
-	/** Базовый слой, желательно использовать addLayer вместо него */
+	/** Базовый слой, желательно использовать addLayer вместо него. */
 	abstract mainLayer: Layer;
 	/**
-	 * Создает и возвращает новый слой.
-	 * Методов для именования и получения слоев нет, это выходит за рамки ответственности класса.
+	 * Создаёт и возвращает новый слой.
+	 * Методов для именования и получения слоёв нет, это выходит за рамки ответственности класса.
 	 */
 	abstract addLayer(): Layer;
 
+	/**
+	 * Сдвинуть карту по заданным координатам.
+	 */
 	abstract panTo(lat: number, lng: number): void;
 
+	/**
+	 * Разместить и масштабировать карту по заданному прямоугольнику.
+	 */
 	abstract fitBounds( south: number, west: number, north: number, east: number ): void;
 
-	/** Установка границ, за которые не будут выходить попапы */
+	/** Установка границ, за которые не будут выходить попапы. */
 	abstract setOverlayBounds(
 		top: number,
 		right: number,
@@ -31,12 +44,18 @@ export default abstract class Map extends DOMComponent {
 		pointermove: PointerEvent,
 	}> = new TypedEventTarget();
 
+	/**
+	 * Преобразовать координаты в точку на карте в пикселях.
+	 */
 	coordsToPoint(lat: number, lng: number): [number, number] {
 		return [lng, lat];
 	}
 
 }
 
+/**
+ * Интерфейс для объекта, который можно показывать и скрывать.
+ */
 export interface VisibilityControl {
 	visible: boolean;
 	show: () => void;
@@ -69,6 +88,7 @@ export abstract class Layer<
 
 }
 
+/** Интерфейс маркера на карте. */
 export interface MapMarker {
 	lat: number;
 	lng: number;
@@ -80,33 +100,61 @@ export interface MapMarker {
 	marker?: Marker | undefined;
 }
 
+/**
+ * Интерфейс интерактивного маркера на карте.
+ * @description При активации маркера открывается всплывающее окно.
+ */
 export interface InteractiveMapMarker extends MapMarker {
 	popupContent: () => Promise<Element>;
 }
 
+/**
+ * Линия на карте.
+ */
 export interface MapPolyline {
 	points: (MapPolylinePoint | InteractiveMapPolylinePoint)[];
 	color: number;
 }
 
+/**
+ * Интерактивная линия на карте.
+ * @description Реагирует на события. Поскольку линия не является отдельным DOM элементом,
+ * события передаются слою, на котором нарисована линия.
+ */
 export interface InteractiveMapPolyline extends MapPolyline {
 	events: Record<string, (event: any) => void>;
 }
 
+/**
+ * Узел линии.
+ */
 export interface MapPolylinePoint {
 	lat: number;
 	lng: number;
 }
 
+/**
+ * Интерактивный узел линии.
+ * @description При активации открывается всплывающее окно.
+ */
 export interface InteractiveMapPolylinePoint extends MapPolylinePoint {
 	popupContent: () => Promise<Element>;
 }
 
+/**
+ * Событие мыши или тачпада.
+ */
 export class PointerEvent extends Event {
 
 	declare lat: number;
 	declare lng: number;
 
+	/**
+	 * Создаёт объект события.
+	 * @param {string} type - Тип события.
+	 * @param {number} lat - Географическая широта.
+	 * @param {number} lng - Географическая долгота.
+	 */
 	constructor(type: string, lat: number, lng: number) {
 		super(type);
 		this.lat = lat;

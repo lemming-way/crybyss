@@ -1,3 +1,9 @@
+/**
+ * @file Модуль получения и кэширования данных о круизах по API.
+ * @module state/api
+ * @version 1.0.0
+ */
+
 import {
 	CruiseAPI,
 	Cruise, Company, Ship, Location, TrackLocation, LocationType,
@@ -5,8 +11,11 @@ import {
 } from '.';
 
 /// @todo: Конфиг вынести в отдельный файл
+/** URL сайта */
 const siteURL = 'https://krubiss.ru';
+/** URL API */
 const apiURL = 'https://krubiss.ru/api/map';
+/** Интерфейсы API */
 const apiEntries = {
 	start : 'start',
 	startCruise : 'start/cruise',
@@ -19,10 +28,12 @@ const apiEntries = {
 	points : 'points'
 };
 
+/** Корпоративные цвета круизных компаний */
 const brandColors: Record<string, number> = {
 	'АЗУРИТ': 0x31739D,
 	'Мостурфлот': 0xF8130D
 };
+/** Цвета для прочих компаний, не имеющих корпоративного цвета */
 const otherColors = [
 	0xE137C2,
 	0x8CE4CB,
@@ -47,11 +58,19 @@ const otherColors = [
 
 let usedColors = 0;
 
+/**
+ * Сортированный список. При добавлении и удалении элементов сохраняется порядок сортировки.
+ * Кроме того, в список не могут быть помещены два элемента с одинаковым ID.
+ */
 class SortedList<T extends { id: string }> implements Iterable<T> {
 	declare compareFunc: ( a: T, b: T ) => number;
 	declare sortingOrder: Record<string, number>;
 	declare items: T[];
 
+	/**
+	 * @param compareFunc - функция для сортировки элементов.
+	 * @param {Array<{id: string}>} [items=[]] - начальный список элементов.
+	 */
 	constructor( compareFunc: ( a: T, b: T ) => number, items: T[] = [] ) {
 		this.compareFunc = compareFunc;
 		this.items = [ ...items.filter( item => !!item.id ) ];
@@ -64,12 +83,23 @@ class SortedList<T extends { id: string }> implements Iterable<T> {
 		}
 	}
 
+	/** Количество элементов в списке */
 	get count() { return this.items.length; }
 
+	/**
+	 * Получить элемент по ID.
+	 * @param {string} id - ID элемента.
+	 * @returns Элемент с указанным ID или undefined.
+	 */
 	item( id: string ): T | undefined {
 		return this.items[ this.sortingOrder[ id ] ];
 	}
 
+	/**
+	 * Добавить элемент к списку.
+	 * @param item - Добавляемый элемент.
+	 * @returns {number} Новое количество элементов в списке.
+	 */
 	add( item: T ): number {
 		if (!item?.id) return this.items.length;
 		if (this.sortingOrder[ item.id ]) {
@@ -104,6 +134,11 @@ class SortedList<T extends { id: string }> implements Iterable<T> {
 		return this.items.length;
 	}
 
+	/**
+	 * Удалить элемент из списка.
+	 * @param {string} id - ID элемента.
+	 * @returns Удалённый элемент или undefined, если элемент не найден.
+	 */
 	delete( id: string ): T | undefined {
 		let ret = this.item( id );
 		if (!!ret) {
@@ -119,17 +154,42 @@ class SortedList<T extends { id: string }> implements Iterable<T> {
 		return ret;
 	}
 
+	/**
+	 * Получить элемент по порядковому номеру.
+	 * @param {number} index - номер элемента в списке.
+	 * @returns Элемент списка или undefined, если номер неправильный.
+	 */
 	at( index: number ): T | undefined { return this.items[ index ]; }
+	/**
+	 * Получить массив отфильтрованных элементов, аналогично фунции Array.filter.
+	 * @param callbackFn - Функция фильтра.
+	 * @param thisArg - Параметр this при вызове функции.
+	 * @returns {Array} Отфильтрованный список элементов.
+	 */
 	filter( callbackFn: ( element: T, index?: number, array?: T[] ) => boolean, thisArg?: any ): T[] { return this.items.filter( callbackFn, thisArg ); }
+	/**
+	 * Преобразование списка, аналогично фунции Array.map.
+	 * @param callbackFn - Функция преобразования.
+	 * @param thisArg - Параметр this при вызове функции.
+	 * @returns {Array} Преобразованный список.
+	 */
 	map( callbackFn: ( element: T, index?: number, array?: T[] ) => any, thisArg?: any ): any[] { return this.items.map( callbackFn, thisArg ); }
+	/** Итератор списка */
 	[Symbol.iterator](): Iterator<T> { return this.items[Symbol.iterator](); }
 };
 
+/**
+ * Объект данных круизной компании
+ * @property {string} id - ID компании
+ * @property {string} name - наименование компании
+ * @property {number} color - назначенный цвет маркеров
+ */
 class CompanyData implements Company {
 	declare id: string;
 	declare name: string;
 	declare color: number;
 
+	/** @param {Object} data - Данные, полученные с сервера */
 	constructor( data: any ) {
 		Object.assign( this, {
 			...data,
@@ -140,6 +200,10 @@ class CompanyData implements Company {
 		} );
 	}
 
+	/**
+	 * Получить все круизы компании.
+	 * @yields {Cruise}
+	 */
 	*cruises(): Iterable<Cruise> {
 		for (const index of cache.activeCruises) {
 			const cruise = cache.cruises.at( index );
@@ -148,6 +212,10 @@ class CompanyData implements Company {
 		}
 	}
 
+	/**
+	 * Получить теплоходы компании.
+	 * @yields {Ship}
+	 */
 	*ships(): Iterable<Ship> {
 		const shipIds: Record<string, true> = {};
 		for (const index of cache.activeCruises) {
@@ -159,6 +227,23 @@ class CompanyData implements Company {
 	}
 }
 
+/**
+ * Объект данных круиза.
+ * @property {string} id - ID круиза.
+ * @property {string} name - Название круиза.
+ * @property {Date} departure - Дата отправления.
+ * @property {Date} arrival - Дата прибытия.
+ * @property {string} departureLocationName - Стоянка отправления.
+ * @property {string} arrivalLocationName - Стоянка прибытия.
+ * @property {string} url - Ссылка на круиз.
+ * @property {Ship} ship - Объект данных теплохода.
+ * @property {Company} company - Объект данных компании.
+ * @property {number} routeReadyStage - Стадия загрузки трека круиза.
+ * @property {Promise<TrackLocation[]>} stops - Промис, возвращающий список стоянок на круизе.
+ * @property {Promise<void>} [_trackLoader] - Промис, сигнализирующий о завершении этапа загрузки трека.
+ * @property {boolean} [_isFetching] - В процессе загрузки трека.
+ * @property {boolean} [_loadHighPriority] - Высокий приоритет загрузки.
+ */
 class CruiseData implements Cruise {
 	declare id: string;
 	declare name: string;
@@ -181,6 +266,7 @@ class CruiseData implements Cruise {
 	declare _isFetching?: boolean;
 	declare _loadHighPriority?: boolean;
 
+	/** @param {Object} data - Данные, полученные с сервера */
 	constructor( data: any ) {
 if (process.env.NODE_ENV === 'production') {
 		Object.assign( this, {
@@ -249,6 +335,11 @@ else {
 		}
 	}
 
+	/**
+	 * Промис, возвращаюший список достопримечательностей на маршруте.
+	 * Начинает загрузку, если она ещё не начата.
+	 * @type {Promise<TrackLocation[]>}
+	 */
 	get sights() {
 		if (!this._sights) this._sights = new Promise( async resolve => {
 			const data = await fetchCruiseSights( this.id );
@@ -269,21 +360,40 @@ else {
 		return this._sights;
 	}
 
+	/**
+	 * Промис, возвращаюший список шлюзов на маршруте.
+	 * Срабатывает после первого этапа загрузки трека.
+	 * @type {Promise<TrackLocation[]>}
+	 */
 	get gateways() {
 		if (this._gateways) return this._gateways;
 		return this.route.then( () => this._gateways );
 	}
 
+	/**
+	 * Промис, возвращаюший список восходов на маршруте.
+	 * Срабатывает после первого этапа загрузки трека.
+	 * @type {Promise<TrackPoint[]>}
+	 */
 	get sunrises() {
 		if (this._sunrises) return Promise.resolve( this._sunrises );
 		return this.route.then( () => this._sunrises );
 	}
 
+	/**
+	 * Промис, возвращаюший список закатов на маршруте.
+	 * Срабатывает после первого этапа загрузки трека.
+	 * @type {Promise<TrackPoint[]>}
+	 */
 	get sunsets() {
 		if (this._sunsets) return Promise.resolve( this._sunsets );
 		return this.route.then( () => this._sunsets );
 	}
 
+	/**
+	 * Разобрать данные точек маршрута.
+	 * @param {Object} data - Данные, полученные с сервера.
+	 */
 	_parseRoute( data: any ) {
 		this._sunrises = [];
 		this._sunsets = [];
@@ -336,6 +446,11 @@ else {
 		return points;
 	}
 
+	/**
+	 * Промис, возвращающий трек маршрута.
+	 * Начинает загрузку, если она ещё не начата.
+	 * @type {Promise<CruiseRoute>}
+	 */
 	get route() {
 		if (!this._route) this._route = new Promise( async resolve => {
 			const data = await fetchCruiseTracks( this.id );
@@ -346,6 +461,10 @@ else {
 		return this._route;
 	}
 
+	/**
+	 * Поэтапная загрузка маршрута.
+	 * @returns {Promise} Пустой промис, сигнализирующий о завершении этапа загрузки.
+	 */
 	loadTrackProgressive( highPriority: boolean = false ) {
 		if (this.routeReadyStage > 0 && this.routeReadyStage < 4) {
 			let promise = this._trackLoader;
@@ -393,6 +512,11 @@ else {
 		return Promise.resolve();
 	}
 
+	/**
+	 * Установить приоритет загрузки трека.
+	 * @param {boolean} highPriority - Высокий приоритет загрузки.
+	 * @returns {void}
+	 */
 	setHighPriorityLoading( highPriority: boolean ) {
 		if (this._trackLoader && !this._isFetching && this._loadHighPriority !== highPriority) {
 			this._loadHighPriority = highPriority;
@@ -400,6 +524,11 @@ else {
 		}
 	}
 
+	/**
+	 * Прервать загрузку трека. Если загрузка уже идёт, текущий этап загрузки всё равно завершится,
+	 * но следующий не будет начат.
+	 * @returns {void}
+	 */
 	cancelLoadTrack() {
 		if (!!this._trackLoader && !this._isFetching) {
 			cancelFetchTrack( this.id );
@@ -408,11 +537,18 @@ else {
 	}
 }
 
+/**
+ * Объект данных теплохода.
+ * @property {string} id - ID теплохода.
+ * @property {string} name - Название теплохода.
+ * @property {Company} company - Объект данных круизной компании.
+ */
 class ShipData implements Ship {
 	declare id: string;
 	declare name: string;
 	declare company: Company;
 
+	/** @param {Object} data - Данные, полученные с сервера */
 	constructor( data: any ) {
 		Object.assign( this, {
 			id: data.id,
@@ -421,6 +557,11 @@ class ShipData implements Ship {
 		} );
 	}
 
+	/**
+	 * Дата начала первого круиза теплохода. Всегда сдвигается на начало суток, независимо от
+	 * времени отправления.
+	 * @type {Date}
+	 */
 	get navigationStartDate(): Date | undefined {
 		const cruise = this.cruises()[Symbol.iterator]().next().value;
 		if (!cruise?.departure) return;
@@ -434,6 +575,11 @@ class ShipData implements Ship {
 		}
 	}
 
+	/**
+	 * Дата окончания последнего круиза теплохода. Всегда сдвигается на конец суток, независимо
+	 * от времени прибытия.
+	 * @type {Date}
+	 */
 	get navigationEndDate(): Date | undefined {
 		const cruises = [ ...this.cruises() ];
 		if (!cruises.length) return;
@@ -451,6 +597,10 @@ class ShipData implements Ship {
 		}
 	}
 
+	/**
+	 * Получить все круизы теплохода.
+	 * @yields {Cruise}
+	 */
 	*cruises(): Iterable<Cruise> {
 		for (const index of cache.activeCruises) {
 			const cruise = cache.cruises.at( index );
@@ -458,6 +608,15 @@ class ShipData implements Ship {
 		}
 	}
 
+	/**
+	 * Круизы, выполняемые в указанное время.
+	 * @param {Date} datetime - Дата и время круиза.
+	 * @returns {Cruise[]} Список круизов.
+	 * @description Если в указанное время теплоход не занят в круизе, то проверяются круизы,
+	 * отправляющиеся в этот же день, но позже заданного момента времени. Если и таких нет,
+	 * то проверяются круизы, завершённые ранее в этот же день. Если ничего не найдено,
+	 * возвращается пустой список.
+	 */
 	cruisesOn( datetime: Date ): Cruise[] {
 		const moment = +datetime;
 		const dateObj = new Date( moment );
@@ -491,6 +650,14 @@ class ShipData implements Ship {
 		return found;
 	}
 
+	/**
+	 * Круиз, выполняемый в указанное время.
+	 * @param {Date} datetime - Дата и время круиза.
+	 * @returns {Cruise} Объект данных круиза.
+	 * @description Если в указанное время выполняется несколько круизов, возвращается тот,
+	 * который начался первым. Если несколько круизов начались одновременно, возвращается самый
+	 * продолжительный из них.
+	 */
 	cruiseOn( datetime: Date ): Cruise | undefined {
 		const cruises = this.cruisesOn( datetime );
 		let i = 0;
@@ -498,6 +665,14 @@ class ShipData implements Ship {
 		return cruises[ i ];
 	}
 
+	/**
+	 * Асинхронно получает положение теплохода на карте в заданный момент времени.
+	 * @param {Date} datetime - Дата и время на карте.
+	 * @returns {Promise<TrackPoint>}
+	 * @description Если трек круиза ещё не загружен, результат возвращается после загрузки
+	 * трека. Если трек уже загружен, то результат будет доступен в следующем цикле выполнения
+	 * скрипта.
+	 */
 	async positionAt( datetime: Date ): Promise<TrackPoint> {
 		const cruise = this.cruiseOn( datetime );
 		if (cruise) {
@@ -509,14 +684,24 @@ class ShipData implements Ship {
 	}
 }
 
+/** Непосредственно загрузчик данных. */
 class APIConnector {
 
 	public baseUrl: string;
 
+	/** @param {string} baseUrl - базовый URL API. */
 	constructor(baseUrl: string) {
 		this.baseUrl = baseUrl;
 	}
 
+	/**
+	 * Запросить данные с сервера.
+	 * @param {string} url - путь интерфейса API относительно базового URL.
+	 * @param {Object} [data={}] - параметры запроса.
+	 * @returns {Promise}
+	 * @description При возникновении ошибки делает три попытки загрузки с увеличивающимся
+	 * интервалом между попытками. Если ни одна попытка не завершилась успехом, возвращает null.
+	 */
 	async send(url: string, data: any = {}): Promise<any> {
 		let sleepTime = 2000;
 		for (let attempt = 0; attempt < 3; attempt++) {
@@ -543,6 +728,14 @@ class APIConnector {
 
 const connector = new APIConnector( apiURL );
 
+/**
+ * Функция валидации входящих данных.
+ * @param {("cruise"|"company"|"ship")} type - Тип данных.
+ * @param data - Данные, полученные от сервера.
+ * @returns {boolean} Данные пригодны для использования.
+ * @todo Функция недоделана. В настоящее время грубо проверяются только данные круизов,
+ * потому что в процессе разработки карты с ними были проблемы.
+ */
 function dataIsSane( type: 'cruise' | 'company' | 'ship', data: any ): boolean {
 	switch (type) {
 		case 'cruise' :
@@ -555,6 +748,13 @@ function dataIsSane( type: 'cruise' | 'company' | 'ship', data: any ): boolean {
 
 let trackFetchingTasks = 0;
 let cruiseTracksToFetch: Record<string, ( data: any ) => void> = {};
+/**
+ * Поставить трек в очередь на загрузку.
+ * @param {string} id - ID круиза.
+ * @returns {Promise} Промис, возвращающий полученные данные.
+ * @description Выполняет первый этап загрузки трека. На первом этапе ID круизов накапливаются и
+ * с небольшим таймаутом отправляются на сервер в одном запросе.
+ */
 function fetchCruiseTracks( id: string ) {
 	const ret: Promise<any[]> = new Promise( resolve => {
 		cruiseTracksToFetch[ id ] = resolve;
@@ -595,6 +795,17 @@ interface CruiseTracksToFetchItem {
 
 let tracksFetching = false;
 const cruiseTracksToFetchQueue: CruiseTracksToFetchItem[] = [];
+/**
+ * Поставить трек в очередь на загрузку.
+ * @param {string} id - ID круиза.
+ * @param {number} stage - Этап загрузки.
+ * @param {boolean} [highPriority=false] - Загрузка с высоким приоритетом.
+ * @returns {Promise} Промис, возвращающий полученные данные.
+ * @description Выполняет последующие этапы загрузки. На этом этапе треки загружаются по одному
+ * в каждом запросе, до 5 запросов выполняются одновременно. При высоком приоритете трек ставится
+ * в начало, а не в конец очереди. Эту функцию можно вызывать несколько раз для одного ID, чтобы
+ * изменить приоритет загрузки.
+ */
 function queueFetchTrackProgressive( id: string, stage: number, highPriority: boolean = false ) {
 	const index = cruiseTracksToFetchQueue.findIndex( item => item.id === id );
 	if (index >= 0) {
@@ -626,6 +837,10 @@ function queueFetchTrackProgressive( id: string, stage: number, highPriority: bo
 }
 
 let progressiveFetchingTasks = 0;
+/**
+ * Выполняет загрузку треков, поставленных в очередь функцией queueFetchTrackProgressive.
+ * @returns {void}
+ */
 function doFetchTracks() {
 	if (progressiveFetchingTasks < 5 && !trackFetchingTasks && !!cruiseTracksToFetchQueue.length) {
 		while (progressiveFetchingTasks < 5 && !!cruiseTracksToFetchQueue.length) {
@@ -643,12 +858,28 @@ function doFetchTracks() {
 	}
 }
 
+/**
+ * Отменить загрузку трека.
+ * @param {string} id - ID круиза.
+ * @returns {void}
+ * @description Усли загрузка трека уже начата, она не будет остановлена. Если трек находится в
+ * очереди на загрузку, то он будет удалён из очереди.
+ */
 function cancelFetchTrack( id: string ) {
 	const index = cruiseTracksToFetchQueue.findIndex( item => item.id === id );
 	if (index >= 0) cruiseTracksToFetchQueue.splice( index, 1 );
 }
 
 let cruiseSightsToFetch: Record<string, ( data: any ) => void> = {};
+/**
+ * Получить достопримечательности для круиза.
+ * @param {string} id - ID круиза.
+ * @returns {Promise} Промис, возвращающий полученные данные.
+ * @description Как и функция fetchCruiseTracks, эта функция выполняет загрузку для нескольких
+ * круизов в одном запросе после небольшого таймаута. Эта функция загружает только список ID мест
+ * для круиза, но не сами данные. Поскольку достопримечательности повторяются для разных круизов,
+ * то сами данные могут уже находиться в кэше.
+ */
 function fetchCruiseSights( id: string ) {
 	const ret: Promise<any[]> = new Promise( resolve => {
 		cruiseSightsToFetch[ id ] = resolve;
@@ -669,6 +900,14 @@ function fetchCruiseSights( id: string ) {
 }
 
 let sightsToFetch: Record<string, true> = {};
+/**
+ * Получить данные достопримечательностей по их ID.
+ * @param {string[]} ids - Список ID достопримечательностей.
+ * @returns {Promise} Промис, возвращающий полученные данные.
+ * @description Как и функция fetchCruiseTracks, эта функция накапливает ID достопримечательностей
+ * в течение небольшого таймаута и затем загружает их в одном запросе. Загруженные данные помещаются
+ * в кэш и могут разделяться между разными круизами.
+ */
 async function fetchSights( ids: string[] ) {
 	ids.forEach( id => sightsToFetch[ id ] = true );
 	await new Promise( resolve => { setTimeout( resolve, 10 ); } );
@@ -715,6 +954,12 @@ else {
 	if (promises.length) await Promise.all( promises );
 }
 
+/**
+ * Получить данные стоянок.
+ * @returns {Promise} Пустой промис, сигнализирующий о завершении операции.
+ * @description Поскольку стоянок относительно немного, они загружаются все сразу и помещаются
+ * в кэш. По окончании загрузки срабатывает событие trackstops-loaded.
+ */
 async function fetchStops() {
 	const data = await connector.send( apiEntries.stops );
 	cache.stops = ( data || [] ).reduce(
@@ -748,6 +993,12 @@ else {
 	window.dispatchEvent( new Event( 'trackstops-loaded' ) )
 }
 
+/**
+ * Получить данные шлюзов.
+ * @returns {Promise} Пустой промис, сигнализирующий о завершении операции.
+ * @description Поскольку шлюзов относительно немного, они загружаются все сразу и помещаются
+ * в кэш. По окончании загрузки срабатывает событие gateways-loaded.
+ */
 async function fetchGateways() {
 	const data = await connector.send( apiEntries.gateways );
 	cache.gateways = ( data || [] ).reduce(
@@ -765,6 +1016,13 @@ async function fetchGateways() {
 	window.dispatchEvent( new Event( 'gateways-loaded' ) )
 }
 
+/**
+ * Получить начальные данные круизов.
+ * @returns {Promise} Пустой промис, сигнализирующий о завершении операции.
+ * Функция вызывается в процессе загрузки и получает с сервера данные всех круизов,
+ * но без включения треков и достопримечательностей. После загрузки треков срабатывает событие
+ * cruisesDataLoaded, затем начинается загрузка стоянок и шлюзов.
+ */
 async function fetchStartCruises() {
 	const { cruises, ships, companies } = ( await connector.send( apiEntries.start ) ) ?? {};
 	for (const company of Object.values( companies ?? {} ) as any) {
@@ -789,6 +1047,14 @@ async function fetchStartCruises() {
 	return;
 }
 
+/**
+ * Получить начальные данные для карты одного круиза.
+ * @param {string} cruiseId - ID круиза.
+ * @returns {Promise} Пустой промис, сигнализирующий о завершении операции.
+ * В отличие от основного режима работы карты, для одного круиза загружаются сразу все данные,
+ * включая достопримечательности и трек маршрута. После завершения загрузки срабатывает событие
+ * cruisesDataLoaded.
+ */
 async function fetchStartSingleCruise( cruiseId: string ) {
 	const { ship, company, 'stops-data': stops, 'sights-data': sights, gateways, ...cruise } = ( await connector.send( apiEntries.startCruise, { id: cruiseId } ) ) ?? {};
 
@@ -877,6 +1143,14 @@ else {
 	}
 }
 
+/**
+ * Получить начальные данные для карты стоянок или мест.
+ * @param {("stops"|sights)} type - Тип загружаемых объектов.
+ * @param {(string|string[])} [id] - Один ID или список ID объектов.
+ * @returns {Promise} Пустой промис, сигнализирующий о завершении операции.
+ * Пустой список ID допускается, но ничего загружено не будет. По окончании загрузки срабатывает
+ * событие cruisesDataLoaded.
+ */
 async function fetchStartLocations( type: string, id?: string | string[] ) {
 	let result;
 
@@ -927,6 +1201,9 @@ else {
 	window.dispatchEvent( new Event( 'cruisesDataLoaded' ) );
 }
 
+/**
+ * Кэш загруженных данных.
+ */
 class Cache {
 	activeCruises : number[] = [];
 	companies = new SortedList<Company>( ( a, b ) => a.name.localeCompare( b.name, 'ru', { ignorePunctuation: true } ) );
@@ -941,6 +1218,9 @@ class Cache {
 	gateways: Record<string, Location> = null;
 }
 
+/**
+ * Интерфейс для получения всех данных от API.
+ */
 class CruiseAPICache extends Cache implements CruiseAPI {
 	activeFilters: {
 		companyName?: string,
@@ -949,6 +1229,12 @@ class CruiseAPICache extends Cache implements CruiseAPI {
 		endDate?: Date | null
 	} = {};
 
+	/**
+	 * @param {("cruise"|"stops"|"single-stop"|"places"|"single-place"|"default")} mapMode -
+	 *     Режим работы карты.
+	 * @param {string} [entityId] - ID загружаемого объекта для режимов "cruise", "single-stop",
+	 *     "single-place". В других режимах не используется.
+	 */
 	constructor( mapMode: string, entityId: string ) {
 		super();
 		switch (mapMode) {
@@ -972,6 +1258,10 @@ class CruiseAPICache extends Cache implements CruiseAPI {
 		}
 	}
 
+	/**
+	 * Самая ранняя дата начала навигации среди всех круизов.
+	 * @type {Date}
+	 */
 	get navigationStartDate(): Date | undefined {
 		if (!this.activeCruises.length) return;
 		else {
@@ -988,6 +1278,10 @@ class CruiseAPICache extends Cache implements CruiseAPI {
 		}
 	}
 
+	/**
+	 * Самая поздняя дата окончания навигации среди всех круизов.
+	 * @type {Date}
+	 */
 	get navigationEndDate(): Date | undefined {
 		if (!this.activeCruises.length) return;
 		else {
@@ -1004,24 +1298,47 @@ class CruiseAPICache extends Cache implements CruiseAPI {
 		}
 	}
 
+	/**
+	 * Получить компанию по ID.
+	 * @param {string} id - ID круизной компании.
+	 * @returns {Company} - Объект данных круизной компании.
+	 */
 	company( id : string ) : Company {
 		return this.companies.item( id );
 	}
 
+	/**
+	 * Получить круиз по ID.
+	 * @param {string} id - ID круиза.
+	 * @returns {Cruise} - Объект данных круиза.
+	 */
 	cruise( id : string ) : Cruise {
 		return this.cruises.item( id );
 	}
 
+	/**
+	 * Получить теплоход по ID.
+	 * @param {string} id - ID теплохода.
+	 * @returns {Ship} - Объект данных теплохода.
+	 */
 	ship( id : string ) : Ship {
 		return this.ships.item( id );
 	}
 
+	/**
+	 * Получить все круизы.
+	 * @yields {Cruise} - Объект данных круиза.
+	 */
 	*allCruises(): Iterable<Cruise> {
 		for (const index of this.activeCruises) {
 			yield this.cruises.at( index );
 		}
 	}
 
+	/**
+	 * Получить все теплоходы.
+	 * @yields {Ship} - Объект данных теплохода.
+	 */
 	*allShips(): Iterable<Ship> {
 		const shipIds: Record<string, true> = {};
 		for (const index of this.activeCruises) {
@@ -1031,6 +1348,10 @@ class CruiseAPICache extends Cache implements CruiseAPI {
 		yield* this.ships.filter( ship => shipIds[ ship.id ] );
 	}
 
+	/**
+	 * Получить все круизные компании.
+	 * @yields {Company} - Объект данных компании.
+	 */
 	*allCompanies(): Iterable<Company> {
 		const companyIds: Record<string, true> = {};
 		for (const ship of this.allShips()) {
@@ -1039,15 +1360,35 @@ class CruiseAPICache extends Cache implements CruiseAPI {
 		yield* this.companies.filter( company => companyIds[ company.id ] );
 	}
 
+	/**
+	 * Список всех стоянок.
+	 * @type {Location[]}
+	 */
 	get allStops(): Location[] {
 		if (this.stops) return Object.values( this.stops );
 		else return [];
 	}
 
+	/**
+	 * Список всех уже загруженных достопримечательностей.
+	 * @type {Location[]}
+	 */
 	get allSights(): Location[] {
 		return Object.values( this.sights ).filter( item => !( item instanceof Promise ) ) as Location[];
 	}
 
+	/**
+	 * Установить фильтр теплоходов и круизов.
+	 * @param {Object} options
+	 * @param {string} [options.companyName] - Фильтр по названию компании.
+	 * @param {string} [options.shipName] - Фильтр по названию теплохода.
+	 * @param {Date|null} [options.startDate] - Начальная дата периода.
+	 * @param {Date|null} [options.endDate] - Завершающая дата периода.
+	 * @description Если какой-либо параметр не задан, то он игнорируется. Если задана пустая
+	 * строка или null для дат, то соответствующий фильтр сбрасывается. Если параметр задан и
+	 * не пустой, то фильтр устанавливается. После установки фильтра функции, возвращающие
+	 * списки компаний, теплоходов, круизов, даты навигации, работают с учётом фильтра.
+	 */
 	setFilter( options: { companyName?: string, shipName?: string, startDate?: Date | null, endDate?: Date | null } ) {
 		for (const key of [ 'companyName', 'shipName', 'startDate', 'endDate' ]) {
 			if (key in options) (this.activeFilters as any)[ key ] = (options as any)[ key ];
@@ -1070,11 +1411,24 @@ class CruiseAPICache extends Cache implements CruiseAPI {
 
 let cache: CruiseAPICache;
 
+/**
+ * Выполнить инициализацию API и кэша.
+ * @param {("cruise"|"stops"|"single-stop"|"places"|"single-place"|"default")} mapMode - Режим работы карты.
+ * @param {string} [entityId] - ID загружаемого объекта для режимов "cruise", "single-stop", "single-place".
+ *     В других режимах не используется.
+ * @returns {CruiseAPI} Созданный объект API.
+ */
 export default function init( mapMode: string, entityId: string ) {
 	cache = new CruiseAPICache( mapMode, entityId );
 	return cache;
 }
 
+/**
+ * Парсит дату из исходных данных.
+ * @param {string} dateString - Текстовые дата и время. Либо "ДД.ММ.ГГГГ ЧЧ:ММ:СС",
+ *     либо "ГГГГ-ММ-ДД ЧЧ:ММ:СС".
+ * @returns {Date} Объект даты и времени.
+ */
 function parseDate(dateString: string): Date {
 	let match = dateString
 		.match(/(\d{2})\.(\d{2})\.(\d{4})\s(\d{2}):(\d{2}):(\d{2})?/);

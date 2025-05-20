@@ -1,8 +1,16 @@
+/**
+ * @file Координаты места.
+ * @module components/location-info
+ * @version 1.0.0
+ * @description Интерактивный элемент с координатами, которые можно скопировать в буфер обмена.
+ */
+
 import copyIcon from '../../icons/copy.svg';
 import {svgAsset} from '../../util';
 import {DOMComponent} from '../dom';
 import './index.css';
 
+/** Интерактивный элемент с координатами, которые можно скопировать в буфер обмена. */
 export default class LocationInfo extends DOMComponent {
 
 	static create(
